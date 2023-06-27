@@ -1,0 +1,52 @@
+MODULE mo_nix_canopy
+
+   USE mo_kind,                    ONLY: wp
+   USE mo_physical_constants, ONLY: stbo, con0_h, als, amw, argas
+   implicit none
+
+   private
+
+   public :: canopy_calcs
+
+
+   real(wp) :: pi = 3.14
+
+   subroutine canopy_cals()
+
+      real(kind=wp) :: lai_eff = 0.6
+
+      SW_IN = SW_IN * exp(-0.71_wp * lai_eff)
+      canopy_frac = max(0.0_wp, min(1.0_wp, (0.55 + 0.29 * log(lai_eff))))
+      !! ADJUSTING TEMPERATURE IS LEFT
+      LW_IN = (1.0_wp - canopy_frac) * LW_IN + canopy_frac * (stbo * canopy_tc ** 4.0_wp)
+
+      canopy_relhum = max(0.0_wp, min(100.0_wp,relhum * (1.0_wp + 0.1*canopy_frac)))
+      canopy_flowindex = 0.9_wp * lai_eff
+      wind_speed = wind_speed * exp(-0.4_wp * canopy_flowindex)
+
+
+      c_absorbed_rad = pi * c_spherical_ice_particle ** 2.0_wp * (1-albebo) * sw_in_org
+
+      c_re = max(0.7_wp,min(10.0_wp,2.0_wp * c_spherical_ice_particle * vw / nu))
+      c_nuss = 1.79 + 0.606 * sqrt(c_re)
+      c_sher = c_nuss
+
+      sat_vap_dens = 0.622 * FUNC_ABS_HUMIDITY ! TO DO
+
+      diff_wat_vap = 2.06e-5 * (( air_temp / 273.0_wp ) ** 1.75_wp)
+
+      c_omega = (1.0_wp / (con0_h * canopy_air_temp * c_nuss )) * ( (als * amw )/ (argas * canopy_air_temp) - 1.0_wp)
+
+      mass_loss_rate = (2 * pi * c_spherical_ice_particle * (relhum/100.0_wp - 1.0_wp) - absorbed_rad * c_omega) / &
+      &   ( als * omega + 1.0_wp / (diff_wat_vap * wat_vap_sat_dens * c_sher)  )
+
+      particle_mass = (4.0_wp / 3.0_wp) * pi * rhoice * c_spherical_ice_particle ** 3.0_wp
+
+      
+
+
+
+
+   end subroutine canopy_cals
+
+END module mo_nix_canopy
