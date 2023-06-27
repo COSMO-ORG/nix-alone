@@ -19,7 +19,3 @@ cd run_folder
 
 # currently path to input data input data is hardcoded in /src/input.90
 # all other possible setting can be done in /src/config.f90
-
-
-
-
