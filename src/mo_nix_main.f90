@@ -54,6 +54,8 @@ MODULE mo_nix_main
 
    USE sfc_terra_data,         ONLY: eps_div
 
+   USE mo_physical_constants,  ONLY: rho_w => rhoh2o  ! density if liquid water
+
    USE mo_nix_config,          ONLY: min_height_layer, max_height_layer
 
    USE mo_nix_meteo_util,      ONLY: calc_precip                   , &
@@ -551,8 +553,10 @@ CONTAINS
 
       DO i = ivstart, ivend ! FIXME probably also something for update_nix_state()
 
+         swe_sn(i) = 0.0_wp  ! Initiate to zero
+
          DO ksn=1,ke_snow
-            swe_sn(i) = swe_sn(i) + ( dzm_sn(i,ksn) * rho_sn(i,ksn) )
+            swe_sn(i) = swe_sn(i) + ( dzm_sn(i,ksn) * rho_sn(i,ksn) ) / rho_w
          ENDDO
 
       END DO
