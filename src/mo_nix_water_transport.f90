@@ -227,6 +227,8 @@ CONTAINS
                      ! by the soil layer for now let's erase it
 
                      IF(abs(lhflx_sn_store) .LT. (1.0_wp*eps_div)) THEN
+                        ! Correct lhf for the energy that could not be applied
+                        lhflx_sn(i) = lhflx_sn(i) - lhflx_sn_store
                         lhflx_sn_store = 0.0_wp
                         exit ksn_loop
                      ENDIF
