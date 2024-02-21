@@ -105,6 +105,7 @@ CONTAINS
       ! Local variables
       REAL (KIND = wp)        :: &
 
+         lhflx_sn_store   , & ! variable to keep track of used lhflx_sn
          dL               , & ! change of layer thickness
          dM               , & ! change of layer mass
          M                , & ! initial mass and volmetric content (water of ice)
@@ -119,8 +120,9 @@ CONTAINS
       ! ------------------------------------------------------------------------------
       ! + Water Transport
       ! ------------------------------------------------------------------------------
-
       DO i = ivstart, ivend
+
+         lhflx_sn_store=lhflx_sn(i)
 
          IF(top(i) .GE. 1) THEN ! snow on the ground
 
@@ -138,12 +140,12 @@ CONTAINS
             ! Latent heat flux towards the surface - mass gain
             ! ---------------------------
 
-            IF(lhflx_sn(i) .GT. eps_div2) THEN ! add mass
+            IF(lhflx_sn_store .GT. eps_div2) THEN ! add mass
 
                IF(t_sn_sfc(i) .LT. t0_melt) THEN  ! add ice
 
-                  dM = lhflx_sn(i) * (dt)/lh_s     ! calculate mass change
-                  lhflx_sn(i) = 0.0_wp            ! reset latent heat flux, i.e. energy was used
+                  dM =lhflx_sn_store * (dt)/lh_s     ! calculate mass change
+                  lhflx_sn_store = 0.0_wp            ! reset latent heat flux, i.e. energy was used
                   hoar = dM
 
                   ! Adjust layer properties accordingly, keep snow density constant
@@ -158,8 +160,8 @@ CONTAINS
 
                ELSE ! add water
 
-                  dM = lhflx_sn(i) * (dt)/lh_v                                          ! calculate mass change
-                  lhflx_sn(i) = 0.0_wp                                                  ! reset latent heat, i.e. energy was used
+                  dM = lhflx_sn_store * (dt)/lh_v                                          ! calculate mass change
+                  lhflx_sn_store = 0.0_wp                                                  ! reset latent heat, i.e. energy was used
                   theta_w(i,top(i)) = theta_w(i,top(i)) + dM/(rho_w*dzm_sn(i,top(i)))   ! update volumetric water content
 
                ENDIF
@@ -170,14 +172,14 @@ CONTAINS
                ! Latent heat flux away from the surface - mass loss
                ! --------------------------
 
-               IF(lhflx_sn(i) .LT. (-1.0_wp*eps_div)) THEN ! additional check in case lh ist super small, but sligtly positive
+               IF(lhflx_sn_store .LT. (-1.0_wp*eps_div)) THEN ! additional check in case lh ist super small, but sligtly positive
 
                   ksn_loop: DO ksn = top(i), 1, -1 ! loop through snow layers
 
                      IF(theta_w(i,ksn) .GT. eps_div) THEN ! there is water, i.e. evaporate first
 
                         ! Calculate mass change
-                        dM = lhflx_sn(i) * (dt)/lh_v
+                        dM = lhflx_sn_store * (dt)/lh_v
                         M = theta_w(i,ksn) * rho_w * dzm_sn(i,ksn)
 
                         ! Check that you only take the available amount of water
@@ -192,11 +194,11 @@ CONTAINS
 
                         ENDIF
 
-                        lhflx_sn(i) = lhflx_sn(i) - dM*lh_v/(dt) ! update energy used
+                        lhflx_sn_store = lhflx_sn_store - dM*lh_v/(dt) ! update energy used
 
                      ELSEIF (theta_i(i,ksn) .GT. eps_div) THEN ! there is no water then sublimate ice matrix
 
-                        dM = lhflx_sn(i) * (dt)/lh_s
+                        dM = lhflx_sn_store * (dt)/lh_s
                         M = theta_i(i,ksn) * rho_i * dzm_sn(i,ksn)
 
                         IF(-dM .GT. M) THEN ! all ice can be sublimated
@@ -217,15 +219,15 @@ CONTAINS
 
                         ENDIF
 
-                        lhflx_sn(i) = lhflx_sn(i) - dM*lh_s/(dt) ! update energy used
+                        lhflx_sn_store = lhflx_sn_store - dM*lh_s/(dt) ! update energy used
 
                      ENDIF
 
                      ! there is still energy left, which should technically be used
                      ! by the soil layer for now let's erase it
 
-                     IF(abs(lhflx_sn(i)) .LT. (1.0_wp*eps_div)) THEN
-                        lhflx_sn(i) = 0.0_wp
+                     IF(abs(lhflx_sn_store) .LT. (1.0_wp*eps_div)) THEN
+                        lhflx_sn_store = 0.0_wp
                         exit ksn_loop
                      ENDIF
 
