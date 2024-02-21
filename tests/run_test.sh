@@ -1,7 +1,7 @@
 resolutions="900 20"                                    # List of temporal resolutions in seconds
 
 
-runSimulation() {
+runNIX() {
     #
     # Run NIX
     #
@@ -24,9 +24,9 @@ runSimulation() {
     popd
 
     ../nix > ${stnfile}.out
+}
 
-
-
+runSNOWPACK() {
     #
     # Run SNOWPACK
     #
@@ -54,5 +54,6 @@ runSimulation() {
 for ts in ${resolutions}
 do
     stnfile="WFJ_forcing_${ts}s.txt"
-    runSimulation
+    runNIX
+    runSNOWPACK
 done
