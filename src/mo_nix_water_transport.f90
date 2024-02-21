@@ -122,7 +122,7 @@ CONTAINS
       ! ------------------------------------------------------------------------------
       DO i = ivstart, ivend
 
-         lhflx_sn_store=lhflx_sn(i)
+         lhflx_sn_store = lhflx_sn(i)
 
          IF(top(i) .GE. 1) THEN ! snow on the ground
 
