@@ -126,7 +126,7 @@ CONTAINS
             ! Layer spacing info
             write(22, '(A,I0)', advance='no') '0501,', top(i)
             DO ksn = 1, top(i), 1
-                write(22, '(A,F0.3)', advance='no') ',', hm_sn(i,ksn)
+                write(22, '(A,F0.3)', advance='no') ',', 100.*hm_sn(i,ksn)	! Convert to cm
             END DO
             write(22, '(A)') ""
             ! Bulk density
@@ -138,25 +138,25 @@ CONTAINS
             ! Temperature
             write(22, '(A,I0)', advance='no') '0503,', top(i)
             DO ksn = 1, top(i), 1
-                write(22, '(A,F0.3)', advance='no') ',', t_sn(i,ksn) - 273.15
+                write(22, '(A,F0.3)', advance='no') ',', t_sn(i,ksn) - 273.15	! Convert to degC
             END DO
             write(22, '(A)') ""
             ! Liquid water content
             write(22, '(A,I0)', advance='no') '0506,', top(i)
             DO ksn = 1, top(i), 1
-                write(22, '(A,F0.3)', advance='no') ',', 100.*theta_w(i,ksn)
+                write(22, '(A,F0.3)', advance='no') ',', 100.*theta_w(i,ksn)	! Convert to %
             END DO
             write(22, '(A)') ""
             ! Ice content
             write(22, '(A,I0)', advance='no') '0515,', top(i)
             DO ksn = 1, top(i), 1
-                write(22, '(A,F0.3)', advance='no') ',', 100.*theta_i(i,ksn)
+                write(22, '(A,F0.3)', advance='no') ',', 100.*theta_i(i,ksn)	! Convert to %
             END DO
             write(22, '(A)') ""
             ! Air content
             write(22, '(A,I0)', advance='no') '0516,', top(i)
             DO ksn = 1, top(i), 1
-                write(22, '(A,F0.3)', advance='no') ',', 100.*theta_a(i,ksn)
+                write(22, '(A,F0.3)', advance='no') ',', 100.*theta_a(i,ksn)	! Convert to %
             END DO
             write(22, '(A)') ""
          ENDIf
