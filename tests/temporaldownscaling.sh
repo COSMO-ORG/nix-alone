@@ -24,7 +24,16 @@ for target_resolution in ${target_resolutions}
 do
 	echo "IMPORT_BEFORE = ./io_base.ini" > io.ini
 	echo "[Interpolations1D]" >> io.ini
+	echo "TOT_PREC::resample = none" >> io.ini
 	echo "TOT_PREC::accumulate::period    = ${target_resolution}" >> io.ini
+
+	if (( ${target_resolution} == 20 )); then
+		echo "[Filters]" >> io.ini
+		echo "TOT_PREC::filter2	= mult" >> io.ini
+		echo "TOT_PREC::arg2::type	= CST" >> io.ini
+		echo "TOT_PREC::arg2::cst	= 45" >> io.ini
+	fi
+
 
 	# Execute meteoio_timeseries
 	${meteoio_timeseries_path}/meteoio_timeseries -c io.ini -b ${begin} -e ${end} -s $(echo ${target_resolution} | awk '{print $1/60}')
@@ -32,10 +41,5 @@ do
 	# Convert output file from meteoio_timseries to inp file for nix
 	awk -f convert_smet_to_inp.awk ${stn_id}.smet > WFJ_forcing_${target_resolution}s.txt
 	rm io.ini
-	# HACK: Ideally, we would just get an output file that contains everything, and we could use the line below
-	#mv ${stn_id}.smet SNOWPACK/${stn_id}_${target_resolution}s.smet
-	# However, timestamps appear doubled (https://gitlabext.wsl.ch/snow-models/meteoio/-/issues/936). Until this is fixed, the lines below take care of the doubled timestamps.
-	awk 'BEGIN {header=0; data=0;} {if(!data) {print}; if(data) {d++; if(d%2==1) print}; if(/SMET 1.1 ASCII/) {header=1; data=0}; if(/\[DATA\]/) {header=0; data=1}}' ${stn_id}.smet > SNOWPACK/${stn_id}_${target_resolution}s.smet
-	awk 'BEGIN {header=0; data=0;} {if(!data) {print}; if(data) {d++; if(d%2==0) print}; if(/SMET 1.1 ASCII/) {header=1; data=0}; if(/\[DATA\]/) {header=0; data=1}}' ${stn_id}.smet > SNOWPACK/${stn_id}_${target_resolution}s_validation.smet
-	rm ${stn_id}.smet
+	mv ${stn_id}.smet SNOWPACK/${stn_id}_${target_resolution}s.smet
 done

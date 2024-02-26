@@ -18,9 +18,7 @@ BEGIN {
 		}
 	}
 	if(data) {
-		# HACK: We need to only print every second line because of a timestep doubling in MeteoIO output
-		d++
-		if(d%2==1) print $t2m "," $ps "," $qv "," sqrt($u*$u+$v*$v) "," $iswr_dir "," $iswr_dif "," $ilwr "," $psum "," 273.15;
+		print $t2m "," $ps "," $qv "," sqrt($u*$u+$v*$v) "," $iswr_dir "," $iswr_dif "," $ilwr "," $psum "," 273.15;
 	}
 	if(/SMET 1.1 ASCII/) {header=1; data=0};
 	if(/\[DATA\]/) {header=0; data=1};
