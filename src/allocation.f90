@@ -53,7 +53,7 @@ contains
       allocate ( theta_a  (nvec,1:ke_snow) ) ; theta_a   = 0.0_wp
       allocate ( dzm_sn   (nvec,1:ke_snow) ) ; dzm_sn    = 0.0_wp
 
-      allocate ( t_sn_n   (nvec,1:ke_snow) ) ; t_sn_n    = 0.0_wp
+      allocate ( t_sn_n   (nvec,1:ke_snow+1) ) ; t_sn_n    = 0.0_wp
 
       allocate ( top_sn   (nvec) )           ; top_sn = 0
 
