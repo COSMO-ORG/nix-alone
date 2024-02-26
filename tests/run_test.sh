@@ -1,4 +1,5 @@
 resolutions="900 20"                                    # List of temporal resolutions in seconds
+numberoflayer="200 100 10 14"
 
 
 runNIX() {
@@ -8,13 +9,38 @@ runNIX() {
 
     nsteps=$(wc -l ${stnfile} | cut -d' ' -f1)
 
+    if (( ${nl} == 10 )); then
+        nlayer=10
+        layer_min=0.002
+        layer_max=0.3
+    fi
+    if (( ${nl} == 14 )); then
+        nlayer=14
+        layer_min=0.002
+        layer_max=0.3
+    fi
+    if (( ${nl} == 100 )); then
+        nlayer=100
+        layer_min=0.0002
+        layer_max=0.03
+    fi
+    if (( ${nl} == 200 )); then
+        nlayer=200
+        layer_min=0.0002
+        layer_max=0.03
+    fi
+    if (( ${nl} == 1000 )); then
+        nlayer=1000
+        layer_min=0.0002
+        layer_max=0.03
+    fi
     pushd ../
 
     mv ./src/input.f90 ./src/input.f90.bak
     sed 's/.\/inp\/WFJ_forcing.txt/'${stnfile}'/g' ./src/input.f90.bak > ./src/input.f90
     
     mv ./src/config.f90 ./src/config.f90.bak
-    sed -e 's/zdt      = 900.0_wp/zdt      = '${ts}'_wp/g' -e 's/nsteps    = 1270080/nsteps    = '${nsteps}'/' ./src/config.f90.bak > ./src/config.f90
+    sed -e 's/zdt      = 900.0_wp/zdt      = '${ts}'_wp/' -e 's/nsteps    = 1270080/nsteps    = '${nsteps}'/' -e 's/ke_snow   = 10/ke_snow   = '${nlayer}'/' -e 's/min_height_layer = 0.002_wp/min_height_layer = '${layer_min}'_wp/' -e 's/max_height_layer = 0.01_wp/max_height_layer = '${layer_max}'_wp/' ./src/config.f90.bak > ./src/config.f90
 
     make
 
@@ -23,7 +49,8 @@ runNIX() {
 
     popd
 
-    ../nix > ${stnfile}.out
+    ../nix > ${stnfile}.${nlayer}layers.out
+    export TZ; awk -v dt=900 -v t=2021-10-01T00:00 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {print} else {if(/^0500/) {print "0500," strftime("%Y-%m-%dT%H:%M:%S", d+=dt)} else {print}}; if(/\[DATA\]/) {data=1}}' output.pro > ${stnfile}.${nlayer}.pro
 }
 
 runSNOWPACK() {
@@ -54,6 +81,9 @@ runSNOWPACK() {
 for ts in ${resolutions}
 do
     stnfile="WFJ_forcing_${ts}s.txt"
-    runNIX
+    for nl in ${numberoflayer}
+    do
+        runNIX
+    done
     runSNOWPACK
 done
