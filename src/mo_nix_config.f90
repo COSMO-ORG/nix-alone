@@ -37,11 +37,14 @@ MODULE mo_nix_config
 
    LOGICAL :: lnix        ! > run with the Swiss multi-layer snow model NIX
 
-   INTEGER :: nlev_sn = 10    ! > run with this amount of layers
+   INTEGER, PARAMETER ::  &
+      ke_snow = 10      , & ! > run with this amount of snow layers
+      ke_soil = 1       , & ! > run with this amount of soil layers
+      nvec = 1
 
-   REAL (KIND = wp) ::  &
-
-      min_height_layer = 0.002_wp , &   ! minimum layer thickness
+   REAL (KIND = wp), PARAMETER ::   &
+      zdt = 900.0_wp              , & ! model timestep : note this should correspond to the meteotimestep     (s)
+      min_height_layer = 0.002_wp , & ! minimum layer thickness
       max_height_layer = 0.01_wp      ! maximum layer thickness
 
    REAL (KIND = wp) :: &
