@@ -94,85 +94,86 @@ CONTAINS
 !       export TZ=UTC; awk -v dt=900 -v t=2020-10-01T00:00 -F, 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {print} else {if(/^0500/) {print "0500," strftime("%Y-%m-%dT%H:%M:%S", d+dt*$2)} else {print}}; if(/\[DATA\]/) {data=1}}' output.pro > output2.pro
 
    IF (pro_output_freq .gt. 0) THEN
-   DO i=ivstart,ivend
-      IF (n .EQ. 1) THEN
-         open(unit=22, file=pro_output_file)
-         write(22,'(A)') "[STATION_PARAMETERS]"
-         write(22,'(A)') "StationName= NIX"
-         write(22,'(A)') "Latitude= -999"
-         write(22,'(A)') "Longitude= -999"
-         write(22,'(A)') "Altitude= -999"
-         write(22,'(A)') "SlopeAngle= 0.00"
-         write(22,'(A)') "SlopeAzi= 0.00"
-         write(22,'(A)') ""
-         write(22,'(A)') "[HEADER]"
-         write(22,'(A)') "0500,Date"
-         write(22,'(A)') "0501,nElems,height [> 0: top, < 0: bottom of elem.] (cm)"
-         write(22,'(A)') "0502,nElems,element density (kg m-3)"
-         write(22,'(A)') "0503,nElems,element temperature (degC)"
-         write(22,'(A)') "0506,nElems,liquid water content by volume (%)"
-         write(22,'(A)') "0515,nElems,ice volume fraction (%)"
-         write(22,'(A)') "0516,nElems,air volume fraction (%)"
-         write(22,'(A)') "0521,nElems,thermal conductivity (W K-1 m-1)"
-         write(22,'(A)') ""
-         write(22,'(A)') "[DATA]"
-                        close(22)
-      ENDIF
-      IF (MOD(n, pro_output_freq) == 0) then
-         open(unit=22, file=pro_output_file, status='old', action='write', access='sequential', form='formatted', position='append')
-         IF (top(i) .EQ. 0) THEN
-            ! Special case with no snow elements
-            write(22, '(A,I0)') '0500,', n
-            write(22, '(A)') '0501,1,0'
-         ELSE
-            ! Write time step
-            write(22, '(A,I0)', advance='yes') '0500,', n
-            ! Layer spacing info
-            write(22, '(A,I0)', advance='no') '0501,', top(i)
-            DO ksn = 1, top(i), 1
-                write(22, '(A,F0.3)', advance='no') ',', 100.*hm_sn(i,ksn)	! Convert to cm
-            END DO
-            write(22, '(A)') ""
-            ! Bulk density
-            write(22, '(A,I0)', advance='no') '0502,', top(i)
-            DO ksn = 1, top(i), 1
-                write(22, '(A,F0.3)', advance='no') ',', rho_sn(i,ksn)
-            END DO
-            write(22, '(A)') ""
-            ! Temperature
-            write(22, '(A,I0)', advance='no') '0503,', top(i)
-            DO ksn = 1, top(i), 1
-                write(22, '(A,F0.3)', advance='no') ',', t_sn(i,ksn) - 273.15	! Convert to degC
-            END DO
-            write(22, '(A)') ""
-            ! Liquid water content
-            write(22, '(A,I0)', advance='no') '0506,', top(i)
-            DO ksn = 1, top(i), 1
-                write(22, '(A,F0.3)', advance='no') ',', 100.*theta_w(i,ksn)	! Convert to %
-            END DO
-            write(22, '(A)') ""
-            ! Ice content
-            write(22, '(A,I0)', advance='no') '0515,', top(i)
-            DO ksn = 1, top(i), 1
-                write(22, '(A,F0.3)', advance='no') ',', 100.*theta_i(i,ksn)	! Convert to %
-            END DO
-            write(22, '(A)') ""
-            ! Air content
-            write(22, '(A,I0)', advance='no') '0516,', top(i)
-            DO ksn = 1, top(i), 1
-                write(22, '(A,F0.3)', advance='no') ',', 100.*theta_a(i,ksn)	! Convert to %
-            END DO
-            write(22, '(A)') ""
-            ! Thermal conductivity
-            write(22, '(A,I0)', advance='no') '0521,', top(i)
-            DO ksn = 1, top(i), 1
-                write(22, '(A,F0.3)', advance='no') ',', hcon_sn(i,ksn)
-            END DO
-            write(22, '(A)') ""
-         ENDIf
-         CLOSE(22)
-      ENDIF
-   ENDDO
+      DO i=ivstart,ivend
+         IF (n .EQ. 1) THEN
+            open(unit=22, file=pro_output_file)
+            write(22,'(A)') "[STATION_PARAMETERS]"
+            write(22,'(A)') "StationName= NIX"
+            write(22,'(A)') "Latitude= -999"
+            write(22,'(A)') "Longitude= -999"
+            write(22,'(A)') "Altitude= -999"
+            write(22,'(A)') "SlopeAngle= 0.00"
+            write(22,'(A)') "SlopeAzi= 0.00"
+            write(22,'(A)') ""
+            write(22,'(A)') "[HEADER]"
+            write(22,'(A)') "0500,Date"
+            write(22,'(A)') "0501,nElems,height [> 0: top, < 0: bottom of elem.] (cm)"
+            write(22,'(A)') "0502,nElems,element density (kg m-3)"
+            write(22,'(A)') "0503,nElems,element temperature (degC)"
+            write(22,'(A)') "0506,nElems,liquid water content by volume (%)"
+            write(22,'(A)') "0515,nElems,ice volume fraction (%)"
+            write(22,'(A)') "0516,nElems,air volume fraction (%)"
+            write(22,'(A)') "0521,nElems,thermal conductivity (W K-1 m-1)"
+            write(22,'(A)') ""
+            write(22,'(A)') "[DATA]"
+                           close(22)
+         ENDIF
+         IF (MOD(n, pro_output_freq) == 0) then
+            open(unit=22, file=pro_output_file, status='old', action='write', access='sequential', &
+                 form='formatted', position='append')
+            IF (top(i) .EQ. 0) THEN
+               ! Special case with no snow elements
+               write(22, '(A,I0)') '0500,', n
+               write(22, '(A)') '0501,1,0'
+            ELSE
+               ! Write time step
+               write(22, '(A,I0)', advance='yes') '0500,', n
+               ! Layer spacing info
+               write(22, '(A,I0)', advance='no') '0501,', top(i)
+               DO ksn = 1, top(i), 1
+                  write(22, '(A,F0.3)', advance='no') ',', 100.*hm_sn(i,ksn)	! Convert to cm
+               END DO
+               write(22, '(A)') ""
+               ! Bulk density
+               write(22, '(A,I0)', advance='no') '0502,', top(i)
+               DO ksn = 1, top(i), 1
+                  write(22, '(A,F0.3)', advance='no') ',', rho_sn(i,ksn)
+               END DO
+               write(22, '(A)') ""
+               ! Temperature
+               write(22, '(A,I0)', advance='no') '0503,', top(i)
+               DO ksn = 1, top(i), 1
+                  write(22, '(A,F0.3)', advance='no') ',', t_sn(i,ksn) - 273.15	! Convert to degC
+               END DO
+               write(22, '(A)') ""
+               ! Liquid water content
+               write(22, '(A,I0)', advance='no') '0506,', top(i)
+               DO ksn = 1, top(i), 1
+                  write(22, '(A,F0.3)', advance='no') ',', 100.*theta_w(i,ksn)	! Convert to %
+               END DO
+               write(22, '(A)') ""
+               ! Ice content
+               write(22, '(A,I0)', advance='no') '0515,', top(i)
+               DO ksn = 1, top(i), 1
+                  write(22, '(A,F0.3)', advance='no') ',', 100.*theta_i(i,ksn)	! Convert to %
+               END DO
+               write(22, '(A)') ""
+               ! Air content
+               write(22, '(A,I0)', advance='no') '0516,', top(i)
+               DO ksn = 1, top(i), 1
+                  write(22, '(A,F0.3)', advance='no') ',', 100.*theta_a(i,ksn)	! Convert to %
+               END DO
+               write(22, '(A)') ""
+               ! Thermal conductivity
+               write(22, '(A,I0)', advance='no') '0521,', top(i)
+               DO ksn = 1, top(i), 1
+                  write(22, '(A,F0.3)', advance='no') ',', hcon_sn(i,ksn)
+               END DO
+               write(22, '(A)') ""
+            ENDIf
+            CLOSE(22)
+         ENDIF
+      ENDDO
    ENDIF
 ! ! ------------------------------------------------------------------------------
 ! ! - end subroutine write_output
