@@ -7,7 +7,6 @@ MODULE output
    USE fields                     ! contains all required global fields
    USE mo_kind,                    ONLY: wp
 
-
 ! ------------------------------------------------------------------------------
 ! DECLARATIONS
 ! ------------------------------------------------------------------------------

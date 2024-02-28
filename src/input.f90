@@ -5,10 +5,13 @@ module input
 ! ------------------------------------------------------------------------------
 
    use mo_kind, only : wp           ! kind-type parameter for real variables
-   use config , only : nsteps, nvec
+   use mo_nix_config , only : nvec
    use fields
 
    implicit none
+
+   integer   :: &
+      nsteps                        ! count for number of rows in file          (-)
 
 contains
 
@@ -22,7 +25,6 @@ contains
 ! ------------------------------------------------------------------------------
 
       integer   :: &
-         nrows     , &   ! count for number of rows in file          (-)
          i , j          , &   ! loop index
          iostatus
 
@@ -38,13 +40,15 @@ contains
       ! -------------------
 
       open(unit=20, status = "old", file=file)
-      nrows = 1
+
+      nsteps = 0
+
       do
          read(20, *, iostat=iostatus)
          if(iostatus/=0) then ! to avoid end of file error.
             exit
          else
-            nrows = nrows + 1
+            nsteps = nsteps + 1
          end if
       end do
       close(20)
@@ -54,30 +58,28 @@ contains
       ! allocate array's
       ! -------------------
 
-      nsteps = nrows - 1
+      allocate (  tmp     (9,nsteps) )
 
-      allocate (  tmp     (9,nrows) )
-
-      allocate ( prr_con  (nvec,nrows)) ; prr_con = 0.0_wp
-      allocate ( prs_con(nvec,nrows)) ; prs_con = 0.0_wp
-      allocate ( prr_gsp(nvec,nrows)) ; prr_gsp = 0.0_wp
-      allocate ( prs_gsp(nvec,nrows)) ; prs_gsp = 0.0_wp
-      allocate ( prg_gsp(nvec,nrows)) ; prg_gsp = 0.0_wp
-      allocate ( u(nvec,nrows))
-      allocate ( v(nvec,nrows))
-      allocate ( t(nvec,nrows))
-      allocate ( qv(nvec,nrows))
-      allocate ( ps(nvec,nrows))
-      allocate ( t_so(nvec,nrows))
-      allocate (iswr(nvec,nrows))
-      allocate (ilwr(nvec,nrows))
+      allocate ( prr_con  (nvec,nsteps)) ; prr_con = 0.0_wp
+      allocate ( prs_con(nvec,nsteps)) ; prs_con = 0.0_wp
+      allocate ( prr_gsp(nvec,nsteps)) ; prr_gsp = 0.0_wp
+      allocate ( prs_gsp(nvec,nsteps)) ; prs_gsp = 0.0_wp
+      allocate ( prg_gsp(nvec,nsteps)) ; prg_gsp = 0.0_wp
+      allocate ( u(nvec,nsteps))
+      allocate ( v(nvec,nsteps))
+      allocate ( t(nvec,nsteps))
+      allocate ( qv(nvec,nsteps))
+      allocate ( ps(nvec,nsteps))
+      allocate ( t_so(nvec,nsteps))
+      allocate (iswr(nvec,nsteps))
+      allocate (ilwr(nvec,nsteps))
       ! -------------------
       ! read data into array
       ! -------------------
 
       ! open unit nad read files
       open(unit=20, status="old", file=file)
-      do i = 1, nrows, 1
+      do i = 1, nsteps, 1
          read(20, *, iostat=iostatus ) tmp(:,:)
          if(iostatus/=0) then ! to avoid end of file error.
             exit
@@ -101,7 +103,7 @@ contains
          !tot_prec (i,:)    = tmp(8,:)   ! total precipitation
          t_so     (i,:)    = tmp(9,:)   ! soil temperature
 
-         do j = 1, nrows
+         do j = 1, nsteps
             if ( t(i,j) > 275.15) then
                prr_con(i,j) = tmp(8,j)
             else
@@ -123,40 +125,5 @@ contains
 ! ==============================================================================
 
 
-
 end module input
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
