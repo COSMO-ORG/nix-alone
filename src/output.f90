@@ -7,7 +7,6 @@ module output
 
    use mo_kind, only : wp           ! kind-type parameter for real variables
    use fields
-   use config
 
    implicit none
 

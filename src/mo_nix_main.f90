@@ -49,7 +49,7 @@ MODULE mo_nix_main
 
    USE mo_physical_constants,  ONLY: rho_w => rhoh2o  ! density if liquid water
 
-   USE mo_nix_config,          ONLY: min_height_layer, max_height_layer
+   USE mo_nix_config,          ONLY: ke_snow, ke_soil, nvec, min_height_layer, max_height_layer
 
    USE mo_nix_meteo_util,      ONLY: calc_precip                   , &
    &                               calc_wind                     , &
