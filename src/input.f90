@@ -38,7 +38,7 @@ contains
       ! -------------------
 
       open(unit=20, status = "old", file=file)
-      nrows = 1
+      nrows = 0
       do
          read(20, *, iostat=iostatus)
          if(iostatus/=0) then ! to avoid end of file error.
