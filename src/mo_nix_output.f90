@@ -90,7 +90,9 @@ CONTAINS
 !       ! profile information
 !       ! ----------------------
 
-!       ! open file
+!       NOTE: in order to be able to visualize the *pro file with niViz.org, it is necessary to include timestamps. Use the following oneliner to achieve this (insert model timestep dt and initial timestamp t)
+!       export TZ=UTC; awk -v dt=900 -v t=2020-10-01T00:00 -F, 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {print} else {if(/^0500/) {print "0500," strftime("%Y-%m-%dT%H:%M:%S", d+dt*$2)} else {print}}; if(/\[DATA\]/) {data=1}}' output.pro > output2.pro
+
    IF (pro_output_freq .gt. 0) THEN
    DO i=ivstart,ivend
       IF (n .EQ. 1) THEN
@@ -111,6 +113,7 @@ CONTAINS
          write(22,'(A)') "0506,nElems,liquid water content by volume (%)"
          write(22,'(A)') "0515,nElems,ice volume fraction (%)"
          write(22,'(A)') "0516,nElems,air volume fraction (%)"
+         write(22,'(A)') "0521,nElems,thermal conductivity (W K-1 m-1)"
          write(22,'(A)') ""
          write(22,'(A)') "[DATA]"
                         close(22)
@@ -158,6 +161,12 @@ CONTAINS
             write(22, '(A,I0)', advance='no') '0516,', top(i)
             DO ksn = 1, top(i), 1
                 write(22, '(A,F0.3)', advance='no') ',', 100.*theta_a(i,ksn)	! Convert to %
+            END DO
+            write(22, '(A)') ""
+            ! Thermal conductivity
+            write(22, '(A,I0)', advance='no') '0521,', top(i)
+            DO ksn = 1, top(i), 1
+                write(22, '(A,F0.3)', advance='no') ',', hcon_sn(i,ksn)
             END DO
             write(22, '(A)') ""
          ENDIf
