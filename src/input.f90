@@ -29,11 +29,8 @@ contains
          iostatus
 
       real (kind=wp), allocatable  :: tmp(:,:)
-      character(*), parameter :: file = "./inp/WFJ_forcing.txt"
 
-!    file = "./inp/kenda.txt"
-!    file = "./inp/dmo.txt"
-!    file = "./inp/snp.txt"
+      character(*), parameter :: file = "./inp/icon_15min_2021.inp"
 
       ! -------------------
       ! count numbers of rows
