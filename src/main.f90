@@ -4,7 +4,7 @@ program  main
    use fields                       ! contains all required global fields
    use allocation                   ! allocates all global fields
    use input                        ! handles the input data
-   use output                       ! handles the output
+   use mo_nix_output                ! handles the output
    use mo_nix_config                ! model configuration
    use mo_nix_constants             ! physical constants
    use mo_nix_main
@@ -99,6 +99,10 @@ program  main
       ! Soil properties
       &     t_so (:,n)                       )
 
+      call write_output(nvec, 1, 1, n, pro_output_freq     , &
+        &                 top_sn, ke_snow, dzm_sn, rho_sn  , &
+        &                 theta_i, theta_w, theta_a        , &
+        &                 t_sn, t_sn_n, hn_sn, t , alpha_sn)
 
    enddo ! nsteps
 
