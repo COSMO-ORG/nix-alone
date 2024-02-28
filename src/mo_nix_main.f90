@@ -43,13 +43,6 @@
 
 MODULE mo_nix_main
 
-
-! #ifdef _OPENMP
-!   USE omp_lib,                ONLY: omp_get_thread_num
-! #endif
-
-!   USE mo_mpi,                 ONLY: get_my_global_mpi_id
-
    USE mo_kind,                ONLY: wp
 
    USE sfc_terra_data,         ONLY: eps_div
@@ -72,7 +65,6 @@ MODULE mo_nix_main
    USE mo_nix_stratigraphy,    ONLY: nix_stratigraphy, &
       split_bottom_layer
 
-   !USE mo_nix_heat_equation,   ONLY: heat_equation_semi_implicit
    USE mo_nix_heat_equation,   ONLY: heat_equation_wrapper
 
    USE mo_nix_substrate,       ONLY: calculate_soil_properties
@@ -254,21 +246,6 @@ CONTAINS
       REAL (KIND = wp), DIMENSION(nvec), INTENT(IN) :: &
          t_so                                 ! soil layer temperature
 
-      ! REAL (KIND = wp), DIMENSION(nvec,ke_soil+1), INTENT(IN) :: &
-      !    w_so                             , & ! total water content (ice + liquid)          [m H20]
-      !    w_so_ice                             ! ice coontent                                [m H20]
-
-      ! REAL    (KIND = wp), DIMENSION(nvec), INTENT(IN) :: &
-      !    plcov                          , &    ! fraction of plant cover                         --
-      !    rootdp                                ! depth of the roots
-
-      ! INTEGER, DIMENSION(nvec), INTENT(IN) :: &
-      !    soiltyp_subs                          ! type of the soil (keys 0-9)
-
-      ! REAL    (KIND = wp), DIMENSION(ke_soil+1), INTENT(IN) :: &
-      !    zmls                                  ! processing soil level structure
-
-
       ! Local variables
       INTEGER ::           &
          i                                , & ! loop index in x-direction
@@ -282,10 +259,6 @@ CONTAINS
 
       INTEGER, DIMENSION(nvec)          :: &
          top              ! index of first (top) snow layer  [-]
-
-      ! REAL (KIND = wp), DIMENSION(nvec,ke_soil+1) :: &
-      !    hcap_so                          , & ! heat capacity of soil layers             [    ]
-      !    hcon_so                              ! heat conductivity of soil laters
 
       REAL (KIND = wp), DIMENSION(nvec) :: hcon_so
 
@@ -303,10 +276,6 @@ CONTAINS
 
 
       CHARACTER(len=12)     :: str_module    = 'nix_main'  ! Output of module for 1 line debug
-
-      ! Just to check how the inputs are
-      !write(*,*) prr_con,prs_con,prr_gsp,prs_gsp,prg_gsp
-      !write(*,*) u,v,t,qv,ps
 
       ! imposing a soil conductivity for standalone applications.
       hcon_so(:) = 0.8_wp
@@ -347,13 +316,6 @@ CONTAINS
       ! Calculate new snow amounts
       CALL calc_hn_amounts(nvec, ivstart, ivend, hn_sn, zsnow_rate, dt)
 
-      ! Calculate soil properties
-      ! CALL calculate_soil_properties(nvec, ivstart, ivend, ke_soil,       &
-      ! &                             soiltyp_subs, w_so, w_so_ice, t_so,  &
-      ! &                             plcov, rootdp, zmls,                 &
-      ! &                             hcap_so, hcon_so )
-
-
       ! ----------------------
       ! Section 1.2 - Stratigraphy - Main routine
       ! ----------------------
@@ -363,8 +325,6 @@ CONTAINS
       &             top, ke_snow, dzm_sn, rho_sn   , &
       &             theta_i, theta_w, theta_a      , &
       &             t_sn, t_sn_n, hn_sn, rho_hn, t, alpha_sn )
-
-
 
 
       ! Update layering
@@ -402,25 +362,10 @@ CONTAINS
 
 
       ! ----------------------
-      ! Section 2.3 - Atmospheric forcing
+      ! Section 2.2 - Heat equation main routine
       ! ----------------------
 
-      ! CALL calculate_atmospheric_forcing(nvec, ivstart, ivend, ke_snow, top , &
-      ! &                                for_sn, swflx_sn_net, swflx_sn_abs , &
-      ! &                                lwflx_sn_up, lwflx_sn_dn           , &
-      ! &                                lhflx_sn, shflx_sn)
-
-
-      ! ----------------------
-      ! Section 2.3 - Heat equation main routine
-      ! ----------------------
-
-      ! CALL heat_equation_semi_implicit(nvec, ivstart, ivend, ke_soil, ke_snow  , &
-      ! &                              top, zm_sn, hcon_sn, hcap_sn, hdif_sn   , &
-      ! &                              t_sn, swflx_sn_abs, hcon_so, hcap_so    , &
-      ! &                              t_so, dt, for_sn, t_sn_sfc)
-
-      call heat_equation_wrapper(nvec, ivstart, ivend, &
+      CALL heat_equation_wrapper(nvec, ivstart, ivend, &
       & ke_snow, top,  &
       & dzm_sn, hcon_sn, hcap_sn, hdif_sn   , &
       & t_sn, t_sn_n, &
@@ -566,24 +511,15 @@ CONTAINS
       ! Output fields to standard output - FIXME: Add message level here and reduce output!
       ! ----------------------
 
-!  ! Do some plausibility printing/writing
+      ! Do some plausibility printing/writing
       DO i = ivstart, ivend
-!
-!    IF(top(i) .GE. 5) THEN
-!
-!      WRITE(*,'(1I,8F8.2)') top(i), h_snow(i), swflx_sn_dn(i), swflx_sn_up(i)      , &
-!      &                                        lwflx_sn_up(i), lwflx_sn_dn(i)      , &
-!      &                                        shflx_sn(i), lhflx_sn(i), for_sn(i)
-         write(*,*) h_snow(i), shflx_sn(i),lhflx_sn(i),tch_sn(i),t(i),t_sn_sfc(i),dzm_sn(i,top(i)),theta_w(i,top(i))
-!      WRITE(*,'(10F8.2)')  dzm_sn(i,:)
-!      WRITE(*,'(10F8.2)')  theta_i(i,:)
-!      WRITE(*,'(10F8.2)')  theta_w(i,:)
-!      WRITE(*,'(10F8.2)')  theta_a(i,:)
-!      WRITE(*,'(10F8.2)')  t_sn(i,:)
-!      WRITE(*,'(10F8.2)')  rho_sn(i,:)
-!
-!    ENDIF
-!
+
+        WRITE(*,*) top(i), h_snow(i), t_sn_sfc(i), swflx_sn_dn(i), swflx_sn_up(i)  , &
+          &        lwflx_sn_up(i), lwflx_sn_dn(i)                                  , &
+          &        shflx_sn(i), lhflx_sn(i)                                        , &
+          &        dzm_sn(i,:), theta_i(i,:), theta_w(i,:)                        , &
+          &        t_sn(i,:)
+
       ENDDO
 
 
