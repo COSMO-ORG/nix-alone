@@ -1,11 +1,12 @@
-MODULE output
+MODULE mo_nix_output
 ! ------------------------------------------------------------------------------
 !
 ! description: this module handles the output of the snow cover scheme
 !
 ! ------------------------------------------------------------------------------
-   USE fields                     ! contains all required global fields
-   USE mo_kind,                    ONLY: wp
+   USE fields                              ! contains all required global fields
+   USE mo_kind,       ONLY : wp
+   USE mo_nix_config, ONLY : pro_output_file
 
 ! ------------------------------------------------------------------------------
 ! DECLARATIONS
@@ -27,9 +28,9 @@ CONTAINS
 ! + Begin subroutine: write_output
 ! ============================================================================
 
-   SUBROUTINE write_output(nvec, ivstart, ivend, n, nout, &
-   &                 top, ke_snow, dzm_sn, rho_sn       , &
-   &                 theta_i, theta_w, theta_a          , &
+   SUBROUTINE write_output(nvec, ivstart, ivend, n, pro_output_freq, &
+   &                 top, ke_snow, dzm_sn, rho_sn                  , &
+   &                 theta_i, theta_w, theta_a                     , &
    &                 t_sn, t_sn_n, hn_sn, t , alpha_sn)
 
 
@@ -39,7 +40,7 @@ CONTAINS
          ivstart       , & ! < start index for computations in the parallel program
          ivend         , & ! < end index for computations in the parallel program
          n             , & ! < time step
-         nout              ! < output time step (save every nout time step)
+         pro_output_freq   ! < output time step (save every nout time step)
 
       INTEGER, DIMENSION(nvec), INTENT(INOUT) :: &
          top                 ! index of the first (top) layer index       (-)
@@ -90,9 +91,10 @@ CONTAINS
 !       ! ----------------------
 
 !       ! open file
+   IF (pro_output_freq .gt. 0) THEN
    DO i=ivstart,ivend
       IF (n .EQ. 1) THEN
-         open(unit=22, file='output.pro')
+         open(unit=22, file=pro_output_file)
          write(22,'(A)') "[STATION_PARAMETERS]"
          write(22,'(A)') "StationName= NIX"
          write(22,'(A)') "Latitude= -999"
@@ -113,8 +115,8 @@ CONTAINS
          write(22,'(A)') "[DATA]"
                         close(22)
       ENDIF
-      IF (MOD(n, nout) == 0) then
-         open(unit=22, file='output.pro', status='old', action='write', access='sequential', form='formatted', position='append')
+      IF (MOD(n, pro_output_freq) == 0) then
+         open(unit=22, file=pro_output_file, status='old', action='write', access='sequential', form='formatted', position='append')
          IF (top(i) .EQ. 0) THEN
             ! Special case with no snow elements
             write(22, '(A,I0)') '0500,', n
@@ -162,7 +164,7 @@ CONTAINS
          CLOSE(22)
       ENDIF
    ENDDO
-
+   ENDIF
 ! ! ------------------------------------------------------------------------------
 ! ! - end subroutine write_output
 ! ! ------------------------------------------------------------------------------
@@ -173,6 +175,6 @@ CONTAINS
 ! - end module output
 ! ==============================================================================
 
-END MODULE output
+END MODULE mo_nix_output
 
 

@@ -49,7 +49,15 @@ MODULE mo_nix_config
 
    REAL (KIND = wp) :: &
 
-      z0_sn  = 0.002_wp                ! roughness length
+      z0_sn  = 0.002_wp               ! roughness length
+
+
+   ! output
+   INTEGER, PARAMETER :: &
+      pro_output_freq = 2            ! output frequency in model timesteps for *pro file output. If set to 0, no *pro file is written
+
+   CHARACTER(*), PARAMETER :: &
+      pro_output_file = "output.pro"
 
 CONTAINS
 
