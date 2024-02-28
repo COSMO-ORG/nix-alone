@@ -11,9 +11,9 @@ module allocation
 
    use mo_kind, only : wp   ! kind-type parameter for real variables
 
-   use config,       only :   &
-      ke_snow  , &     ! maximum number of snow layers
-      ke_soil  , &
+   use mo_nix_config, only :   &
+      ke_snow                , &     ! maximum number of snow layers
+      ke_soil                , &     ! number of soil layers
       nvec
 
    use fields

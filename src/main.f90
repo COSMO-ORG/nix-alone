@@ -4,8 +4,8 @@ program  main
    use fields                       ! contains all required global fields
    use allocation                   ! allocates all global fields
    use input                        ! handles the input data
-   use config                       ! model configuration
    use output                       ! handles the output
+   use mo_nix_config                ! model configuration
    use mo_nix_constants             ! physical constants
    use mo_nix_main
    use mo_nix_init
