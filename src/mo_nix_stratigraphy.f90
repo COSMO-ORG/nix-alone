@@ -87,7 +87,7 @@ CONTAINS
          theta_a       , &   ! air ice content                            (-)
          t_sn                ! snow temperature (main level)              (K)
 
-      REAL    (KIND = wp), DIMENSION(nvec,1:ke_snow),  INTENT(INOUT) :: &
+      REAL    (KIND = wp), DIMENSION(nvec,1:ke_snow+1),  INTENT(INOUT) :: &
          t_sn_n
 
       REAL    (KIND = wp), DIMENSION(nvec),  INTENT(INOUT) :: &

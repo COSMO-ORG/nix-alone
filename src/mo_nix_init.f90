@@ -31,7 +31,7 @@ MODULE mo_nix_init
 
    USE mo_kind,                    ONLY: wp
 
-   USE mo_nix_config,              ONLY: nlev_sn
+   USE mo_nix_config,              ONLY: ke_snow, nvec
 
 ! ------------------------------------------------------------------------------
 ! DECLARATIONS

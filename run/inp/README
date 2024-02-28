@@ -1,0 +1,27 @@
+######################################################################
+###
+###  Purpose: Description of already available input data (/run/inp).
+###           
+###           'Source'   - source of data either descriptive or URL etc.
+###           'Start'    - start date of data
+###           'End'      - end date of data
+###           'Timestep' - timestep of data
+###           'Timezone' - timezone used  
+###           'Script'   - script used from /scripts
+###
+###  Author: Sascha Bellaire and other
+###
+###  Date: 2024-02-24
+###
+#####################################################################
+
+
+  Name:		icon_15min_2021.inp
+  Source:	ICON - experiment direct model output
+  Start:        2021-10-05 00:30
+  End:		2022-07-16 00:00
+  Timestep:	900s
+  Timezone:     UTC
+  Script:	None
+
+

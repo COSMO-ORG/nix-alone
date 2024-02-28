@@ -11,9 +11,9 @@ module allocation
 
    use mo_kind, only : wp   ! kind-type parameter for real variables
 
-   use config,       only :   &
-      ke_snow  , &     ! maximum number of snow layers
-      ke_soil  , &
+   use mo_nix_config, only :   &
+      ke_snow                , &     ! maximum number of snow layers
+      ke_soil                , &     ! number of soil layers
       nvec
 
    use fields
@@ -53,7 +53,7 @@ contains
       allocate ( theta_a  (nvec,1:ke_snow) ) ; theta_a   = 0.0_wp
       allocate ( dzm_sn   (nvec,1:ke_snow) ) ; dzm_sn    = 0.0_wp
 
-      allocate ( t_sn_n   (nvec,1:ke_snow) ) ; t_sn_n    = 0.0_wp
+      allocate ( t_sn_n   (nvec,1:ke_snow+1) ) ; t_sn_n    = 0.0_wp
 
       allocate ( top_sn   (nvec) )           ; top_sn = 0
 
