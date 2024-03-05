@@ -55,10 +55,12 @@ MODULE mo_nix_config
 
    ! output
    INTEGER, PARAMETER :: &
-      pro_output_freq = 12            ! output frequency in model timesteps for *pro file output. If set to 0, no *pro file is written
+      pro_output_freq = 12             , & ! output frequency in model timesteps for *pro file output. If set to 0, no *pro file is written
+      smet_output_freq = 12                ! output frequency in model timesteps for *smet file output. If set to 0, no *smet file is written
 
    CHARACTER(*), PARAMETER :: &
-      pro_output_file = "output.pro"
+      pro_output_file = "output.pro"   , & ! output file name for *pro file
+      smet_output_file = "output.smet"     ! output file name for *smet file
 
 CONTAINS
 
