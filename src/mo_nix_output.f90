@@ -114,6 +114,7 @@ CONTAINS
             write(22,'(A)') "0515,nElems,ice volume fraction (%)"
             write(22,'(A)') "0516,nElems,air volume fraction (%)"
             write(22,'(A)') "0521,nElems,thermal conductivity (W K-1 m-1)"
+            write(22,'(A)') "0522,nElems,absorbed shortwave radiation (W m-2)"
             write(22,'(A)') ""
             write(22,'(A)') "[DATA]"
                            close(22)
@@ -168,6 +169,12 @@ CONTAINS
                write(22, '(A,I0)', advance='no') '0521,', top(i)
                DO ksn = 1, top(i), 1
                   write(22, '(A,F0.3)', advance='no') ',', hcon_sn(i,ksn)
+               END DO
+               write(22, '(A)') ""
+               ! Absorbed shortwave radiation
+               write(22, '(A,I0)', advance='no') '0522,', top(i)
+               DO ksn = 1, top(i), 1
+                  write(22, '(A,F0.3)', advance='no') ',', swflx_sn_abs(i,ksn)
                END DO
                write(22, '(A)') ""
             ENDIf
