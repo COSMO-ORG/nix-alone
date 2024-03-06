@@ -29,19 +29,20 @@ CONTAINS
 ! + Begin subroutine: write_output
 ! ============================================================================
 
-   SUBROUTINE write_output(nvec, ivstart, ivend, n, pro_output_freq, &
-   &                 top, ke_snow, dzm_sn, rho_sn                  , &
-   &                 theta_i, theta_w, theta_a                     , &
+   SUBROUTINE write_output(nvec, ivstart, ivend, n, pro_output_freq, smet_output_freq, &
+   &                 top, ke_snow, dzm_sn, rho_sn                                    , &
+   &                 theta_i, theta_w, theta_a                                       , &
    &                 t_sn, t_sn_n, hn_sn, t , alpha_sn)
 
 
       ! Subroutine Arguments
       INTEGER, INTENT(IN)   :: &
-         nvec          , & ! < array dimensions
-         ivstart       , & ! < start index for computations in the parallel program
-         ivend         , & ! < end index for computations in the parallel program
-         n             , & ! < time step
-         pro_output_freq   ! < output time step (save every nout time step)
+         nvec            , & ! < array dimensions
+         ivstart         , & ! < start index for computations in the parallel program
+         ivend           , & ! < end index for computations in the parallel program
+         n               , & ! < time step
+         pro_output_freq , & ! < output time step for *pro files (save every pro_output_freq time step)
+         smet_output_freq    ! < output time step for *smet files (save every smet_output_freq time step)
 
       INTEGER, DIMENSION(nvec), INTENT(INOUT) :: &
          top                 ! index of the first (top) layer index       (-)
