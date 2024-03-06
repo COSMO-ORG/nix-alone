@@ -204,7 +204,7 @@ CONTAINS
             write(22,'(A)') "altitude     = -999"
             write(22,'(A)') "nodata       = -999"
             write(22,'(A)') "fields       = timestep TA QI VW P PSUM PSUM_PH HS &
-                                             SWE TSS HN MS_SNOWPACK_RUNOFF SWR_NET &
+                                             SWE TSS HN MS_SN_RUNOFF SWR_NET &
                                              ISWR RSWR ILWR OLWR ALBEDO SHF LHF EBAL"
             write(22,'(A)') "[DATA]"
             close(22)
@@ -233,13 +233,13 @@ CONTAINS
                ! HS
                write(22, '(AF0.3)', advance="no") " ", h_snow(i)
                ! SWE
-               write(22, '(AF0.3)', advance="no") " ", swe_sn(i)
+               write(22, '(AF0.3)', advance="no") " ", swe_sn(i) * 1000.    ! Convert to kg/m2
                ! Snow surface temperature
                write(22, '(AF0.3)', advance="no") " ", t_sn_sfc(i)
                ! New snow amount
                write(22, '(AF0.3)', advance="no") " ", hn_sn(i)
                ! Runoff
-               write(22, '(AF0.3)', advance="no") " ", runoff_sn(i)
+               write(22, '(AF0.3)', advance="no") " ", runoff_sn(i) * 1000. ! Convert to kg/m2
                ! Net shortwave
                write(22, '(AF0.3)', advance="no") " ", swflx_sn_net(i)
                ! Incoming shortwave
