@@ -7,8 +7,6 @@ runNIX() {
     # Run NIX
     #
 
-    nsteps=$(wc -l ${stnfile} | cut -d' ' -f1)
-
     if (( ${nl} == 10 )); then
         nlayer=10
         layer_min=0.002
@@ -37,20 +35,22 @@ runNIX() {
     pushd ../
 
     mv ./src/input.f90 ./src/input.f90.bak
-    sed 's/.\/inp\/WFJ_forcing.txt/'${stnfile}'/g' ./src/input.f90.bak > ./src/input.f90
+    sed 's/.\/inp\/icon_15min_2021.inp/'${stnfile}'/g' ./src/input.f90.bak > ./src/input.f90
     
-    mv ./src/config.f90 ./src/config.f90.bak
-    sed -e 's/zdt      = 900.0_wp/zdt      = '${ts}'_wp/' -e 's/nsteps    = 1270080/nsteps    = '${nsteps}'/' -e 's/ke_snow   = 10/ke_snow   = '${nlayer}'/' -e 's/min_height_layer = 0.002_wp/min_height_layer = '${layer_min}'_wp/' -e 's/max_height_layer = 0.01_wp/max_height_layer = '${layer_max}'_wp/' ./src/config.f90.bak > ./src/config.f90
+    mv ./src/mo_nix_config.f90 ./src/mo_nix_config.f90.bak
+    sed -e 's/zdt               = 900.0_wp/zdt      = '${ts}'_wp/' -e 's/ke_snow = 10/ke_snow   = '${nlayer}'/' -e 's/min_height_layer  = 0.01_wp/min_height_layer = '${layer_min}'_wp/' -e 's/max_height_layer  = 0.05_wp/max_height_layer = '${layer_max}'_wp/' ./src/mo_nix_config.f90.bak > ./src/mo_nix_config.f90
 
     make
 
     mv src/input.f90.bak src/input.f90
-    mv src/config.f90.bak src/config.f90
+    mv src/mo_nix_config.f90.bak src/mo_nix_config.f90
 
     popd
 
     ../nix > ${stnfile}.${nlayer}layers.out
-    export TZ; awk -v dt=900 -v t=2021-10-01T00:00 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {print} else {if(/^0500/) {print "0500," strftime("%Y-%m-%dT%H:%M:%S", d+=dt)} else {print}}; if(/\[DATA\]/) {data=1}}' output.pro > ${stnfile}.${nlayer}.pro
+    export TZ=UTC; awk -v dt=${ts} -v t=2021-10-01T00:00 -F, 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {print} else {if(/^0500/) {print "0500," strftime("%Y-%m-%dT%H:%M:%S", d+dt*$2)} else {print}}; if(/\[DATA\]/) {data=1}}' output.pro > ${stnfile}.${nlayer}.pro
+    export TZ=UTC; awk -v dt=${ts} -v t=2021-10-01T00:00 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {if(/^fields/) {gsub(/timestep/, "TIMESTAMP", $0)}; print} else {printf("%s", strftime("%Y-%m-%dT%H:%M:%S", d+dt*$1)); for(i=2; i<=NF; i++) {printf " %s", $i}; printf "\n"}; if(/\[DATA\]/) {data=1}}' output.smet > ${stnfile}.${nlayer}.smet
+    rm output.pro output.smet
 }
 
 runSNOWPACK() {
