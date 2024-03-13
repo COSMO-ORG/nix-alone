@@ -360,6 +360,10 @@ CONTAINS
       &                             alpha_sn, t_sn_sfc                       , &
       &                             rho_sn, dzm_sn, dt )
 
+      CALL calculate_atmospheric_forcing(nvec, ivstart, ivend, ke_snow, top  , &
+      &                                for_sn, swflx_sn_net, swflx_sn_abs  , &
+      &                                lwflx_sn_up, lwflx_sn_dn            , &
+      &                                lhflx_sn, shflx_sn)
 
       ! ----------------------
       ! Section 2.2 - Heat equation main routine

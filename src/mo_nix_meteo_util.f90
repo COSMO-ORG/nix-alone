@@ -470,6 +470,9 @@ CONTAINS
             swflx_sn_abs(i,1) = swflx_sn_abs(i,1) + swflx_sn_net(i)
          ENDIF
 
+         ! Recalculate swflx_sn_net to have it available for output
+         swflx_sn_net(i) = swflx_sn_dn(i) - swflx_sn_up(i)
+
          ! -------------------------
          ! + Calculate upward long-wave radiation
          ! -------------------------
