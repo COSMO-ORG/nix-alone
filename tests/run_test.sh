@@ -32,14 +32,26 @@ runNIX() {
         layer_min=0.0002
         layer_max=0.03
     fi
+
+    # Make sure the output frequency is the same in real time independent of chosen model timestep
+    output_freq=$(echo ${ts} | awk -v sec_between=3600 '{printf "%d", sec_between/$1}')
+
     pushd ../
 
+    # Set the input file
     mv ./src/input.f90 ./src/input.f90.bak
     sed 's/.\/inp\/icon_15min_2021.inp/'${stnfile}'/g' ./src/input.f90.bak > ./src/input.f90
-    
-    mv ./src/mo_nix_config.f90 ./src/mo_nix_config.f90.bak
-    sed -e 's/zdt               = 900.0_wp/zdt      = '${ts}'_wp/' -e 's/ke_snow = 10/ke_snow   = '${nlayer}'/' -e 's/min_height_layer  = 0.01_wp/min_height_layer = '${layer_min}'_wp/' -e 's/max_height_layer  = 0.05_wp/max_height_layer = '${layer_max}'_wp/' ./src/mo_nix_config.f90.bak > ./src/mo_nix_config.f90
 
+    # Make required changes to the configuration
+    mv ./src/mo_nix_config.f90 ./src/mo_nix_config.f90.bak
+    sed -e 's/zdt               = 900.0_wp/zdt      = '${ts}'_wp/' \
+        -e 's/ke_snow = 10/ke_snow   = '${nlayer}'/' \
+        -e 's/min_height_layer  = 0.01_wp/min_height_layer = '${layer_min}'_wp/' \
+        -e 's/max_height_layer  = 0.05_wp/max_height_layer = '${layer_max}'_wp/' \
+        -e 's/_output_freq = 12/_output_freq = '${output_freq}'/' \
+        ./src/mo_nix_config.f90.bak > ./src/mo_nix_config.f90
+
+    # Compile NIX
     make
 
     mv src/input.f90.bak src/input.f90
