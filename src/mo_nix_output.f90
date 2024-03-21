@@ -76,11 +76,7 @@ CONTAINS
          i            , &   ! loop index in x-direction
          ksn                ! loop index in z-direction (snow layers)
 
-      REAL    (KIND = wp), DIMENSION(1:ke_snow) :: &
-         tmp_sn             ! temporary utility array used for copying
 
-      REAL    (KIND = wp), DIMENSION(1:ke_snow+1) :: &
-         tmp_sn_n             ! temporary utility array used for copying
       ! ------------------------------------------------------------------------------
       ! Begin subroutine
       ! ------------------------------------------------------------------------------
@@ -134,7 +130,7 @@ CONTAINS
                ! Layer spacing info
                write(22, '(A,I0)', advance='no') '0501,', top(i)
                DO ksn = 1, top(i), 1
-                  write(22, '(A,F0.3)', advance='no') ',', 100.*hm_sn(i,ksn)	! Convert to cm
+                  write(22, '(A,F0.3)', advance='no') ',', 100.*hm_sn(i,ksn)    ! Convert to cm
                END DO
                write(22, '(A)') ""
                ! Bulk density
@@ -146,25 +142,25 @@ CONTAINS
                ! Temperature
                write(22, '(A,I0)', advance='no') '0503,', top(i)
                DO ksn = 1, top(i), 1
-                  write(22, '(A,F0.3)', advance='no') ',', t_sn(i,ksn) - 273.15	! Convert to degC
+                  write(22, '(A,F0.3)', advance='no') ',', t_sn(i,ksn) - 273.15 ! Convert to degC
                END DO
                write(22, '(A)') ""
                ! Liquid water content
                write(22, '(A,I0)', advance='no') '0506,', top(i)
                DO ksn = 1, top(i), 1
-                  write(22, '(A,F0.3)', advance='no') ',', 100.*theta_w(i,ksn)	! Convert to %
+                  write(22, '(A,F0.3)', advance='no') ',', 100.*theta_w(i,ksn)  ! Convert to %
                END DO
                write(22, '(A)') ""
                ! Ice content
                write(22, '(A,I0)', advance='no') '0515,', top(i)
                DO ksn = 1, top(i), 1
-                  write(22, '(A,F0.3)', advance='no') ',', 100.*theta_i(i,ksn)	! Convert to %
+                  write(22, '(A,F0.3)', advance='no') ',', 100.*theta_i(i,ksn)  ! Convert to %
                END DO
                write(22, '(A)') ""
                ! Air content
                write(22, '(A,I0)', advance='no') '0516,', top(i)
                DO ksn = 1, top(i), 1
-                  write(22, '(A,F0.3)', advance='no') ',', 100.*theta_a(i,ksn)	! Convert to %
+                  write(22, '(A,F0.3)', advance='no') ',', 100.*theta_a(i,ksn)  ! Convert to %
                END DO
                write(22, '(A)') ""
                ! Thermal conductivity
@@ -205,8 +201,8 @@ CONTAINS
             write(22,'(A)') "altitude     = -999"
             write(22,'(A)') "nodata       = -999"
             write(22,'(A)') "fields       = timestep TA QI VW P PSUM PSUM_PH HS &
-                                             SWE TSS HN MS_SN_RUNOFF SWR_NET &
-                                             ISWR RSWR ILWR OLWR ALBEDO SHF LHF EBAL"
+&                                           SWE TSS HN MS_SN_RUNOFF SWR_NET &
+&                                           ISWR RSWR ILWR OLWR ALBEDO SHF LHF EBAL"
             write(22,'(A)') "[DATA]"
             close(22)
          ENDIF
