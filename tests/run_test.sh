@@ -1,5 +1,5 @@
-resolutions="900 20"                                    # List of temporal resolutions in seconds
-numberoflayer="200 100 10 14"
+resolutions="20 900"                                    # List of temporal resolutions in seconds
+numberoflayer="100 10"
 
 
 runNIX() {
@@ -34,7 +34,8 @@ runNIX() {
     fi
 
     # Make sure the output frequency is the same in real time independent of chosen model timestep
-    output_freq=$(echo ${ts} | awk -v sec_between=3600 '{printf "%d", sec_between/$1}')
+    output_freq_tgt=3600
+    output_freq=$(echo ${ts} | awk -v sec_between=${output_freq_tgt} '{printf "%d", sec_between/$1}')
 
     pushd ../
 
@@ -59,7 +60,7 @@ runNIX() {
 
     popd
 
-    ../nix > ${stnfile}.${nlayer}layers.out
+    /usr/bin/time -a -o 'timings.txt' -f "NIX ${nlayer}L ${ts}s : %e" ../nix > ${stnfile}.${nlayer}layers.out
     export TZ=UTC; awk -v dt=${ts} -v t=2021-10-01T00:00 -F, 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {print} else {if(/^0500/) {print "0500," strftime("%Y-%m-%dT%H:%M:%S", d+dt*$2)} else {print}}; if(/\[DATA\]/) {data=1}}' output.pro > ${stnfile}.${nlayer}.pro
     export TZ=UTC; awk -v dt=${ts} -v t=2021-10-01T00:00 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {if(/^fields/) {gsub(/timestep/, "TIMESTAMP", $0)}; print} else {printf("%s", strftime("%Y-%m-%dT%H:%M:%S", d+dt*$1)); for(i=2; i<=NF; i++) {printf " %s", $i}; printf "\n"}; if(/\[DATA\]/) {data=1}}' output.smet > ${stnfile}.${nlayer}.smet
     rm output.pro output.smet
@@ -86,7 +87,7 @@ runSNOWPACK() {
     echo "[Interpolations1D]" >> io_snowpack_${ts}.ini
     echo "PSUM::accumulate::period = ${ts}" >> io_snowpack_${ts}.ini
     # Run SNOWPACK:
-    ../../snowpack/bin/snowpack -c io_snowpack_${ts}.ini -b ${begin} -e ${end}
+    /usr/bin/time -a -o 'timings.txt' -f "SNOWPACK ${ts}s : %e" ../../snowpack/bin/snowpack -c io_snowpack_${ts}.ini -b ${begin} -e ${end}
 }
 
 
