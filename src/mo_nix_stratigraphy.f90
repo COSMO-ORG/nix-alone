@@ -138,7 +138,7 @@ CONTAINS
                   ! First snow element also needs to define the first nodal temperature
                   t_sn_n(i,top(i))   = min(t(i),t0_melt)
                ENDIF
-               t_sn_n(i,top(i) + 1) = t_sn(i,top(i))
+               t_sn_n(i,top(i) + 1) = t_sn_n(i,top(i))
                t_sn(i,top(i))       = 0.5_wp * (t_sn_n(i,top(i)) + t_sn_n(i,top(i)+1))
 
                ! Reset new snow storage
@@ -223,7 +223,7 @@ CONTAINS
                theta_w(i,top(i))  = 0.0_wp           ! new snow is always dry
                theta_a(i,top(i))  = 1.0_wp - theta_i(i,top(i)) - theta_w(i,top(i))
 
-               t_sn_n(i,top(i) + 1) = t_sn(i,top(i))
+               t_sn_n(i,top(i) + 1) = t_sn_n(i,top(i))
                t_sn(i,top(i))       = 0.5_wp * (t_sn_n(i,top(i)) + t_sn_n(i,top(i)+1))
 
                ! Reset new snow storage
