@@ -355,7 +355,7 @@ contains
       do i = ivstart, ivend
          if(top(i) .gt. 1) then            ! snow on the ground
             U = t_sn_n(i,:)
-            ddU = 0.0_wp
+            dU = 0.0_wp
 
             iterloop: do iteration = 1,maxiter
 
