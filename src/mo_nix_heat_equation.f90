@@ -2,7 +2,7 @@ module mo_nix_heat_equation
 
    use mo_kind,                    only: wp
    use mo_physical_constants,      only: stbo
-   use mo_nix_constants, only: eps_div
+   use mo_nix_constants,           only: eps_div, e_snow
 ! ------------------------------------------------------------------------------
 ! declarations
 ! ------------------------------------------------------------------------------
@@ -294,20 +294,20 @@ contains
          nvec               , & ! < array dimensions
          ivstart            , & ! < start index for computations in the parallel program
          ivend              , & ! < end index for computations in the parallel program
-         ke_snow             ! < number of snow layers
+         ke_snow                ! < number of snow layers
 
       integer, dimension(nvec), intent(in) :: &
          top                    ! top layer index
 
       ! vs: intent for t_sn !?
       real (kind=wp), dimension(nvec,ke_snow), intent(inout) :: &
-         dzm_sn              , & ! < snow layer depth
+         dzm_sn             , & ! < snow layer depth
          hcon_sn            , & ! <            conductivity
          hcap_sn            , & ! <            capacity
-         hdif_sn            , & ! <            difusivity
+         hdif_sn            , & ! <            diffusivity
          t_sn               , & ! <            temperature
-         swflx_sn_abs       , &
-         theta_w ! <            absorbed short-wave radiation
+         swflx_sn_abs       , & ! <            absorbed short-wave radiation
+         theta_w                ! <            liquid water content
 
       real (kind=wp), dimension(nvec), intent(inout) :: &
          lwflx_sn_dn        , &
@@ -320,6 +320,11 @@ contains
       real (kind=wp), dimension(nvec,ke_snow+1), intent(inout) :: &
          t_sn_n
 
+      real (kind=wp), dimension(ke_snow+1) :: &
+         U,      &
+         dU,     &
+         ddU
+
       real (kind=wp), dimension(nvec), intent(in) :: &
          hcon_so            , & ! < soil layer conductivity
          t_so                   ! <            temperature
@@ -329,7 +334,7 @@ contains
 
       ! vs: intent for t_sn_sfc should be in-out !?
       real (kind = wp), dimension(nvec), intent(inout)  ::  &
-      &   t_sn_sfc               ! < snow surface temperature
+      &   t_sn_sfc              ! < snow surface temperature
 
       real (kind = wp), dimension(nvec), intent(in)  ::  &
       &   tch_sn
@@ -337,135 +342,149 @@ contains
       real (kind=wp), dimension(nvec), intent(in) :: t
 
       !!! local variables
-      integer :: l_top, ksn, counter, i
-      real(kind=wp), dimension(ke_snow+1) :: a_matrix,b_matrix,c_matrix,d_matrix,tmp_t
+      real (kind=wp) :: tol = 0.0001_wp    ! Solver tolerance for convergence in heat equation solver
+      integer :: maxiter = 200             ! Maximum number of iterations in heat equation solver
+      integer :: ksn, i, iteration
+
+      real(kind=wp), dimension(ke_snow+1) :: a_matrix,b_matrix,c_matrix,d_matrix
       real(kind=wp) :: emiss, t_emiss, coeff, delta_rad
-      real(kind=wp) :: alpha_solver_down,alpha_solver_up
-      real(kind=wp) :: beta_solver_down,beta_solver_up
-      real(kind=wp) :: gamma_sh, gamma_soil
+      real(kind=wp) :: c, k, maxddU
+      real(kind=wp) :: alpha_shf, gamma_soil
 
 
       do i = ivstart, ivend
-         l_top = top(i)
-         if(l_top .gt. 1) then  !!!snow on the ground
+         if(top(i) .gt. 1) then            ! snow on the ground
+            U = t_sn_n(i,:)
+            ddU = 0.0_wp
 
-            ! PREP
-            emiss   = lwflx_sn_dn(i)/(stbo*t(i)*t(i)*t(i)*t(i))
-            t_emiss = sqrt(sqrt(emiss)) * t(i)
-            delta_rad = stbo * (t_emiss + t_sn_sfc(i)) * (t_emiss * t_emiss + t_sn_sfc(i) * t_sn_sfc(i))
+            iterloop: do iteration = 1,maxiter
 
-            ! exchange coefficient for sensible heat flux
-            if ( abs( t(i) - t_sn_sfc(i) ) < eps_div  ) then
-               gamma_sh = 1.0
-            else
-               gamma_sh = shflx_sn(i) / ( t(i) - t_sn_sfc(i) )
-            endif
+               a_matrix = 0.0_wp
+               b_matrix = 0.0_wp
+               c_matrix = 0.0_wp
+               d_matrix = 0.0_wp
+               ddU = dU
+               dU = 0.0_wp
 
-            gamma_soil = (hcon_so(i)/0.005_wp) ! VS: length of the top soil layer
+               ! Net longwave radiation coefficient: non-linear dependence on snow surface temperature
+               emiss   = lwflx_sn_dn(i)/(stbo*t(i)*t(i)*t(i)*t(i))
+               t_emiss = sqrt(sqrt(emiss)) * t(i)
+               delta_rad = stbo * (t_emiss + U(top(i)+1)) * (t_emiss * t_emiss + U(top(i)+1) * U(top(i)+1))
 
-            counter = 0
-            do ksn = l_top+1,1,-1
-               counter = counter+1
+               ! Exchange coefficient for sensible heat flux
+               if ( abs( t(i) - t_sn_sfc(i) ) < eps_div  ) then
+                  alpha_shf = shflx_sn(i) / ( eps_div ) !1.0
+               else
+                  alpha_shf = shflx_sn(i) / ( t(i) - t_sn_sfc(i) )
+               endif
 
-               if(counter .eq. 1) then ! ... top node ! neumann bc ! KSN = l_top + 1
+               gamma_soil = 0.0_wp !(hcon_so(i)/0.005_wp) ! VS: length of the top soil layer
 
-                  alpha_solver_up   = (dzm_sn(i,ksn-1) * rho_sn(i,ksn-1) * hcap_sn(i,ksn-1)) / ( 6.0_wp * dt )
-                  beta_solver_up    = ( hcon_sn(i,ksn-1) ) * (1.0_wp/dzm_sn(i,ksn-1))
+               ! Set up the solver for the tridiagonal form:
+               ! a_matrix(i)*x(i-1) + b_matrix(i)*x(i) + c_matrix(i)*x(i+1) = d_matrix(i)
+               do ksn = 1,top(i),1
+                  c = (dzm_sn(i,ksn) * rho_sn(i,ksn) * hcap_sn(i,ksn)) / ( 6.0_wp * dt )
+                  k = hcon_sn(i,ksn) / dzm_sn(i,ksn)
 
-                  a_matrix(counter)     =  0.0_wp
-                  b_matrix(counter)     =  2.0_wp * alpha_solver_up + beta_solver_up + delta_rad + gamma_sh ! delta_rad for LW ! Gamma_sh for Sensible
-                  c_matrix(counter)     =  alpha_solver_up - beta_solver_up
+                  ! SNOWPACK: Se[0][0] = Se[1][1] = k;
+                  b_matrix(ksn)   = b_matrix(ksn)   + k
+                  b_matrix(ksn+1) = b_matrix(ksn+1) + k
 
-                  d_matrix(counter)     =  2.0_wp * alpha_solver_up * t_sn_n(i,ksn) + alpha_solver_up * t_sn_n(i,ksn-1) &
-                  &                        + delta_rad * t_emiss &
-                  &                        + lhflx_sn(i) & ! for latent heat
-                  &                        + gamma_sh * t(i)  & ! for sensible
-                  &                        + swflx_sn_abs(i,ksn-1)
+                  ! SNOWPACK: Se[0][1] = Se[1][0] = -k;
+                  a_matrix(ksn+1)   = a_matrix(ksn+1) - k
+                  c_matrix(ksn)     = c_matrix(ksn)   - k
+
+                  ! SNOWPACK: Add the implicit time integration term to the right hand side
+                  d_matrix(ksn)   = d_matrix(ksn)   - (k * t_sn_n(i,ksn)   - k * t_sn_n(i,ksn+1))
+                  d_matrix(ksn+1) = d_matrix(ksn+1) - (k * t_sn_n(i,ksn+1) - k * t_sn_n(i,ksn)  )
+
+                  ! SNOWPACK: Now add the heat capacitity matrix
+                  b_matrix(ksn)   = b_matrix(ksn)   + 2.0_wp * c
+                  b_matrix(ksn+1) = b_matrix(ksn+1) + 2.0_wp * c
+
+                  a_matrix(ksn+1) = a_matrix(ksn+1) + c
+                  c_matrix(ksn)   = c_matrix(ksn)   + c
+
+                  ! SNOWPACK: Heat the element via short-wave radiation
+                  d_matrix(ksn+1) = d_matrix(ksn+1) + swflx_sn_abs(i,ksn)
+
+                  ! Add upper boundary conditions (the surface energy balance)
+                  if (ksn .EQ. top(i)) THEN
+                     ! TODO add rain energy
+                     if(theta_w(i,ksn) .gt. 0.0_wp) then
+                        ! Explicit
+                        d_matrix(ksn+1) = d_matrix(ksn+1) + &
+                        &                 + (lwflx_sn_dn(i) & ! Net longwave radiation
+                        &                 - e_snow*stbo*t_sn_n(i,ksn+1)*t_sn_n(i,ksn+1)*t_sn_n(i,ksn+1)*t_sn_n(i,ksn+1)) &
+                        &                 + lhflx_sn(i)     & ! Latent heat flux
+                        &                 + shflx_sn(i)       ! Sensible heat flux
+                     else
+                        ! Implicit
+                        d_matrix(ksn+1) = d_matrix(ksn+1) + lhflx_sn(i)                               ! Latent heat flux
+                        d_matrix(ksn+1) = d_matrix(ksn+1) + alpha_shf * t(i)                          ! Sensible heat flux linearization
+                        d_matrix(ksn+1) = d_matrix(ksn+1) + delta_rad * t_emiss                       ! Longwave radiation linearization
+                        b_matrix(ksn+1) = b_matrix(ksn+1) + alpha_shf + delta_rad
+                        d_matrix(ksn+1) = d_matrix(ksn+1) - (alpha_shf + delta_rad) * t_sn_n(i,ksn+1)
+                     endif
+                  endif
+
+                  ! Add lower boundary condition (Dirichlet BC)
+                  if (ksn .EQ. 1) THEN
+                     b_matrix(ksn) = 1E12_wp
+                  endif
+
+               enddo
 
 
-               elseif (counter .eq. l_top+1) then ! ... bottom node ! neumann BC ! KSN = 1
+               ! ------------------------------------------------------------
+               ! Solve the system - Thomas Algorithm
+               ! ------------------------------------------------------------
 
-                  alpha_solver_up   = (dzm_sn(i,ksn) * rho_sn(i,ksn) * hcap_sn(i,ksn)) / ( 6.0_wp * dt )
-                  beta_solver_up    = ( hcon_sn(i,ksn) ) * (1.0_wp/dzm_sn(i,ksn))
+               ! step 1: forward elimination
+               do ksn=2,top(i)+1
+                  coeff  = a_matrix(ksn)/b_matrix(ksn-1)
+                  b_matrix(ksn) = b_matrix(ksn) - coeff * c_matrix(ksn-1)
+                  d_matrix(ksn) = d_matrix(ksn) - coeff * d_matrix(ksn-1)
+               enddo
 
+               dU = 0.0_wp
+               ! step 2: back substitution
+               dU(top(i)+1) = d_matrix(top(i)+1)/b_matrix(top(i)+1)
 
-                  a_matrix(counter) = alpha_solver_up - beta_solver_up
-                  b_matrix(counter) = 2.0_wp * alpha_solver_up + beta_solver_up + gamma_soil
-                  c_matrix(counter) = 0.0_wp
+               do ksn=top(i),1,-1
+                  dU(ksn) = (d_matrix(ksn) - c_matrix(ksn) * dU(ksn+1))/b_matrix(ksn)
+               enddo
 
-                  d_matrix(counter) = alpha_solver_up * t_sn_n(i,ksn+1) + 2.0_wp * alpha_solver_up * t_sn_n(i,ksn) &
-                  &                   + gamma_soil * t_so(i)
+               do ksn = 1,top(i)+1
+                  ddU(ksn) = dU(ksn) - ddU(ksn)
+                  if (maxddU .lt. abs(ddU(ksn)) .or. ksn .eq. 1) then
+                     maxddU = abs(ddU(ksn))
+                  endif
+                  U(ksn) = U(ksn) + ddU(ksn)
+               enddo
 
-               else  ! middle nodes
+               if (maxddU < tol) then
+                  exit iterloop
+               endif
 
-                  alpha_solver_up  = ( dzm_sn(i,ksn) * rho_sn(i,ksn) * hcap_sn(i,ksn) ) / ( 6.0_wp * dt )
-                  beta_solver_up   = ( hcon_sn(i,ksn) ) * (1.0_wp/dzm_sn(i,ksn))
+            enddo iterloop ! iteration
 
-                  alpha_solver_down = ( dzm_sn(i,ksn-1) * rho_sn(i,ksn-1) * hcap_sn(i,ksn-1) )  / ( 6.0_wp * dt )
-                  beta_solver_down  = ( hcon_sn(i,ksn-1) ) * (1.0_wp/dzm_sn(i,ksn-1))
-
-                  a_matrix(counter) = alpha_solver_up - beta_solver_up
-                  b_matrix(counter) = 2.0_wp * (alpha_solver_up + alpha_solver_down) + beta_solver_up + beta_solver_down
-                  c_matrix(counter) = alpha_solver_down - beta_solver_down
-
-                  d_matrix(counter) = alpha_solver_up * t_sn_n(i,ksn+1) +  &
-                  &                                2.0_wp * (alpha_solver_up + alpha_solver_down) * t_sn_n(i,ksn) + &
-                  &                                alpha_solver_down * t_sn_n(i,ksn-1)
-
-               endif ! if block for splitting between top, middle and bottom nodes
+            do ksn=1,top(i)+1
+               t_sn_n(i,ksn) = U(ksn)
             enddo
 
 
-            ! ------------------------------------------------------------
-            ! Solve the system - Thomas Algorithm
-            ! ------------------------------------------------------------
-
-            ! step 1: forward elimination
-            do ksn=2,l_top+1
-               coeff  = a_matrix(ksn)/b_matrix(ksn-1)
-               b_matrix(ksn) = b_matrix(ksn) - coeff * c_matrix(ksn-1)
-               d_matrix(ksn) = d_matrix(ksn) - coeff * d_matrix(ksn-1)
-            enddo
-
-            tmp_t = 0.0_wp
-            ! step 2: back substitution
-            tmp_t(l_top+1) = d_matrix(l_top+1)/b_matrix(l_top+1)
-
-            do ksn=l_top,1,-1
-               !write(*,*) ksn,d_matrix(ksn),c_matrix(ksn), t_sn_now(i,ksn),b_matrix(ksn)
-               tmp_t(ksn) = (d_matrix(ksn) - c_matrix(ksn) * tmp_t(ksn+1))/b_matrix(ksn)
-            enddo
-
-
-            counter=0
-            do ksn=l_top+1,1,-1
-               counter=counter+1
-               t_sn_n(i,ksn) = tmp_t(counter)
-            enddo
-
-
-            do ksn=1,l_top
+            do ksn=1,top(i)
                t_sn(i,ksn) = 0.5_wp * (t_sn_n(i,ksn) + t_sn_n(i,ksn+1))
             enddo
 
-            t_sn_sfc(i) = t_sn_n(i,l_top+1)
-            ! shflx_sn(i) = gamma_sh * ( t(i) - t_sn_sfc(i) )
-
-
+            t_sn_sfc(i) = t_sn_n(i,top(i)+1)
+            ! shflx_sn(i) = alpha_shf * ( t(i) - t_sn_sfc(i) )
 
 
          endif ! end snow on the ground
 
       enddo ! end of i
-
-
-
-
-
-
-
-
-
 
    end subroutine heat_equation_wrapper
 !------------------------------------------------------------------------------
