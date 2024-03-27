@@ -454,6 +454,7 @@ CONTAINS
          ! + Calculate absprbed short-wave radiation
          ! -------------------------
 
+         swflx_sn_abs(i,:) = 0.0_wp
          tbloop: DO ksn = top(i), 1, -1
 
             k_ext               = ( rho_sn(i,ksn) / 3.0_wp ) + 50.0_wp

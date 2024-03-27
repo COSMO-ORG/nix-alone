@@ -62,7 +62,9 @@ MODULE mo_nix_constants
 
       theta_s                     = 1.0_wp                 , & ! Saturated Water Content, for now we say 1.0
       theta_r                     = 0.0_wp                 , & ! Minimum amount of liquid water that will remain
-      ctalb                       = 0.004_wp                   ! VS : added snow physical constants
+      ctalb                       = 0.004_wp               , & ! VS : added snow physical constants
+
+      e_snow                      = 0.98_wp                    ! lw emissivity for snow
 
    REAL  (KIND=wp), PARAMETER :: eps_div  = 1.0E-6_wp
 
