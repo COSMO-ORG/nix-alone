@@ -236,7 +236,7 @@ CONTAINS
          ivstart , &
          ivend
 
-      INTEGER, DIMENSION(nvec), INTENT(IN) :: &
+      INTEGER, DIMENSION(nvec), INTENT(INOUT) :: &
          top                 ! index of the first (top) layer index       (-)
 
       INTEGER, INTENT(IN)  ::  &
@@ -273,6 +273,22 @@ CONTAINS
 
 
       DO i = ivstart, ivend
+
+         ! -----------------------------------
+         ! Remove snow layers with zero height
+         ! -----------------------------------
+
+         IF(top(i) .GE. 1) THEN
+
+            DO ksn=1,top(i)
+
+               IF(dzm_sn(i,ksn) .EQ. 0) THEN
+                  top(i) = top(i) - 1
+               ENDIF
+
+            ENDDO ! ksn
+
+         ENDIF
 
          IF(top(i) .GE. 1) THEN
 
