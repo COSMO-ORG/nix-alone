@@ -137,10 +137,10 @@ CONTAINS
 
                   t_sn_n(i,ksn) = 2.0_wp * t_sn(i,ksn-1) - t_sn_n(i,ksn-1) ! adjusting nodal temperature for the upper node of the merged cell
 
-                  ! ... and reset roperties - FIXME: Doing this here means we have to give additional fields we don't need here to the
-                  !                                  subroutine. Doing this reset in update_nix_state() might make mor sense but would
-                  !                                  require some adaptations like a new field a marker that identifies
-                  !                                  melted/aggregated layers.
+                  ! ... and reset properties - FIXME: Doing this here means we have to give additional fields we don't need here to the
+                  !                                   subroutine. Doing this reset in update_nix_state() might make more sense but would
+                  !                                   require some adaptations like a new field a marker that identifies
+                  !                                   melted/aggregated layers.
                   hm_sn(i,ksn)       = 0.0_wp
                   zm_sn(i,ksn)       = 0.0_wp
                   dzm_sn(i,ksn)      = 0.0_wp
@@ -151,7 +151,6 @@ CONTAINS
 
                   rho_sn(i,ksn)      = 0.0_wp
                   t_sn(i,ksn)        = 0.0_wp
-                  t_sn_n(i,ksn+1)    = 0.0_wp
                   mass_sn(i,ksn)     = 0.0_wp
 
                   hcap_sn(i,ksn)     = 0.0_wp
@@ -198,17 +197,17 @@ CONTAINS
                hm_sn(i,ksn)       = 0.0_wp
                zm_sn(i,ksn)       = 0.0_wp
                dzm_sn(i,ksn)      = 0.0_wp
+
                theta_i(i,ksn)     = 0.0_wp
                theta_w(i,ksn)     = 0.0_wp
                theta_a(i,ksn)     = 0.0_wp
                theta_i_old(i,ksn) = 0.0_wp
+
                rho_sn(i,ksn)      = 0.0_wp
-
                t_sn(i,ksn)        = 0.0_wp
-
                t_sn_n(i,ksn+1)    = 0.0_wp
-
                mass_sn(i,ksn)     = 0.0_wp
+
                hcap_sn(i,ksn)     = 0.0_wp
                hcon_sn(i,ksn)     = 0.0_wp
                hdif_sn(i,ksn)     = 0.0_wp
