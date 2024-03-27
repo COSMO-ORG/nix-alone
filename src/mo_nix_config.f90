@@ -44,9 +44,11 @@ MODULE mo_nix_config
 
    REAL (KIND = wp), PARAMETER ::   &
       zdt               = 900.0_wp              , & ! model timestep : note this should correspond to the meteotimestep     (s)
- 
-      min_height_layer  = 0.01_wp              , & ! minimum layer thickness
-      max_height_layer  = 0.05_wp                   ! maximum layer thickness
+
+      min_newsnow_layer = 0.002_wp              , & ! minimum new snow layer thickness, precip below this threshold is kept in
+                                                    ! storage, until sufficient precipitation has accumulated to build min_newsnow_layer (m)
+      min_height_layer  = 0.01_wp               , & ! minimum layer thickness (m)
+      max_height_layer  = 0.05_wp                   ! maximum layer thickness (m)
 
    REAL (KIND = wp) :: &
 
