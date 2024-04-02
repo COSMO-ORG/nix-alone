@@ -37,7 +37,7 @@ MODULE mo_nix_stratigraphy
    USE mo_nix_constants,             ONLY: eps_div
 
    USE mo_nix_constants,           ONLY: rho_i
-   USE mo_nix_config,              ONLY: min_height_layer, max_height_layer
+   USE mo_nix_config,              ONLY: min_newsnow_layer, min_height_layer, max_height_layer
 
 
 ! ------------------------------------------------------------------------------
@@ -106,6 +106,9 @@ CONTAINS
          i            , &   ! loop index in x-direction
          ksn                ! loop index in z-direction (snow layers)
 
+      REAL    (KIND = wp) :: &
+         dzm_sn_new         ! new surface layer depth in case of snowfall (m)
+
       REAL    (KIND = wp), DIMENSION(1:ke_snow) :: &
          tmp_sn             ! temporary utility array used for copying
 
@@ -117,29 +120,42 @@ CONTAINS
 
       DO i = ivstart, ivend
 
-         IF( (hn_sn(i)+eps_div)/rho_hn(i) .GE. max_height_layer) THEN  ! There is enough new snow for a full layer ...
+         IF( hn_sn(i) .GT. min_newsnow_layer) THEN  ! There is enough new snow to consider snowfall
 
-            IF (top(i) .LT. ke_snow) THEN ! ... and maximum number of layers is not reached ...
+            IF (top(i) .LT. ke_snow) THEN           ! When maximum number of layers is not reached ...
 
-               ! -----------------------
-               ! Add layers
-               ! -----------------------
+               IF (top(i) .EQ. 0 .OR. dzm_sn(i,top(i)) + hn_sn(i)/rho_hn(i) .GT. max_height_layer) THEN
+                  ! -----------------------
+                  ! Add layers
+                  ! -----------------------
 
-               ! Update layer index
-               top(i) = top(i) + 1  ! new index of top layer
+                  ! Update layer index
+                  top(i) = top(i) + 1  ! new index of top layer
 
-               ! Assign properties
-               dzm_sn(i,top(i))  = hn_sn(i)/rho_hn(i)
-               rho_sn(i,top(i))  = rho_hn(i)
-               theta_i(i,top(i)) = rho_hn(i) / rho_i
-               theta_w(i,top(i)) = 0.0_wp
-               theta_a(i,top(i)) = 1.0_wp - theta_i(i,top(i)) - theta_w(i,top(i))
-               IF (top(i) .EQ. 1) THEN
-                  ! First snow element also needs to define the first nodal temperature
-                  t_sn_n(i,top(i))   = min(t(i),t0_melt)
+                  ! Assign properties
+                  dzm_sn(i,top(i))  = hn_sn(i)/rho_hn(i)
+                  rho_sn(i,top(i))  = rho_hn(i)
+                  theta_i(i,top(i)) = rho_hn(i) / rho_i
+                  theta_w(i,top(i)) = 0.0_wp
+                  theta_a(i,top(i)) = 1.0_wp - theta_i(i,top(i)) - theta_w(i,top(i))
+                  IF (top(i) .EQ. 1) THEN
+                     ! First snow element also needs to define the first nodal temperature
+                     t_sn_n(i,top(i))  = min(t(i),t0_melt)
+                  ENDIF
+                  t_sn_n(i,top(i) + 1) = t_sn_n(i,top(i))
+                  t_sn(i,top(i))       = 0.5_wp * (t_sn_n(i,top(i)) + t_sn_n(i,top(i)+1))
+               ELSE
+                  ! -----------------------
+                  ! Increase top layer
+                  ! -----------------------
+                  dzm_sn_new        = dzm_sn(i,top(i)) + hn_sn(i)/rho_hn(i)
+                  rho_sn(i,top(i))  = (dzm_sn(i,top(i)) * rho_sn(i,top(i)) + hn_sn(i)) / dzm_sn_new
+                  theta_i(i,top(i)) = (theta_i(i,top(i)) * dzm_sn(i,top(i)) + (hn_sn(i)/rho_i)) &
+                                      / dzm_sn_new
+                  theta_w(i,top(i)) = theta_w(i,top(i)) * dzm_sn(i,top(i)) / dzm_sn_new
+                  theta_a(i,top(i)) = 1.0_wp - theta_i(i,top(i)) - theta_w(i,top(i))
+                  dzm_sn(i,top(i)) = dzm_sn_new
                ENDIF
-               t_sn_n(i,top(i) + 1) = t_sn_n(i,top(i))
-               t_sn(i,top(i))       = 0.5_wp * (t_sn_n(i,top(i)) + t_sn_n(i,top(i)+1))
 
                ! Reset new snow storage
                hn_sn(i) = 0.0_wp
@@ -147,85 +163,95 @@ CONTAINS
                alpha_sn(i) = 0.85_wp ! FIXME: link the hard-coded value to some config store
 
             ELSE ! ... otherwise merge bottom two layers to make room for new layer
+               IF (hn_sn(i)/rho_hn(i) .GT. min_height_layer .AND. &
+                  dzm_sn(i,top(i)) + hn_sn(i)/rho_hn(i) .GT. max_height_layer) THEN
+                  ! -----------------------
+                  ! Merge bottom two layers
+                  ! -----------------------
+                  theta_i(i,1) =   (theta_i(i,2)*dzm_sn(i,2)                                        &
+                     +  theta_i(i,1)*dzm_sn(i,1)) / (dzm_sn(i,2) + dzm_sn(i,1))    ! volumetric ice content
 
-               ! -----------------------
-               ! Merge bottom two layers
-               ! -----------------------
+                  theta_w(i,1) =   (theta_w(i,2)*dzm_sn(i,2)                                        &
+                     +  theta_w(i,1)*dzm_sn(i,1)) / (dzm_sn(i,2) + dzm_sn(i,1))    ! volumetric water content
 
-               theta_i(i,1) =   (theta_i(i,2)*dzm_sn(i,2)                                        &
-                  +  theta_i(i,1)*dzm_sn(i,1)) / (dzm_sn(i,2) + dzm_sn(i,1))    ! volumetric ice content
-
-               theta_w(i,1) =   (theta_w(i,2)*dzm_sn(i,2)                                        &
-                  +  theta_w(i,1)*dzm_sn(i,1)) / (dzm_sn(i,2) + dzm_sn(i,1))    ! volumetric water content
-
-               t_sn(i,1)    =   (t_sn(i,2)*dzm_sn(i,2)                                           &
-                  +  t_sn(i,1)*dzm_sn(i,1))    / (dzm_sn(i,2) + dzm_sn(i,1))    ! snow layer temperature
-
-
-               dzm_sn(i,1)  = dzm_sn(i,2) + dzm_sn(i,1)                                     ! layer thickness
+                  t_sn(i,1)    =   (t_sn(i,2)*dzm_sn(i,2)                                           &
+                     +  t_sn(i,1)*dzm_sn(i,1))    / (dzm_sn(i,2) + dzm_sn(i,1))    ! snow layer temperature
 
 
-               ! Update top layer index
-               top(i) = top(i) - 1
+                  dzm_sn(i,1)  = dzm_sn(i,2) + dzm_sn(i,1)                         ! layer thickness
 
 
-               ! -----------------------------
-               ! Move layers down to free top layer
-               ! -----------------------------
+                  ! Update top layer index
+                  top(i) = top(i) - 1
 
-               ! Layer thickness
-               tmp_sn(1:ke_snow) = dzm_sn(i,1:ke_snow)
 
-               DO ksn = ke_snow, 3, -1
-                  dzm_sn(i,ksn-1)  = tmp_sn(ksn)
-               ENDDO
+                  ! -----------------------------
+                  ! Move layers down to free top layer
+                  ! -----------------------------
 
-               ! Volumetric ice content
-               tmp_sn(1:ke_snow) = theta_i(i,1:ke_snow)
+                  ! Layer thickness
+                  tmp_sn(1:ke_snow) = dzm_sn(i,1:ke_snow)
 
-               DO ksn = ke_snow, 3, -1
-                  theta_i(i,ksn-1)  = tmp_sn(ksn)
-               ENDDO
+                  DO ksn = ke_snow, 3, -1
+                     dzm_sn(i,ksn-1)  = tmp_sn(ksn)
+                  ENDDO
 
-               ! Volumetric water content
-               tmp_sn(1:ke_snow) = theta_w(i,1:ke_snow)
+                  ! Volumetric ice content
+                  tmp_sn(1:ke_snow) = theta_i(i,1:ke_snow)
 
-               DO ksn = ke_snow, 3, -1
-                  theta_w(i,ksn-1)  = tmp_sn(ksn)
-               ENDDO
+                  DO ksn = ke_snow, 3, -1
+                     theta_i(i,ksn-1)  = tmp_sn(ksn)
+                  ENDDO
 
-               ! Layer temperature
-               tmp_sn(1:ke_snow) = t_sn(i,1:ke_snow)
+                  ! Volumetric water content
+                  tmp_sn(1:ke_snow) = theta_w(i,1:ke_snow)
 
-               DO ksn = ke_snow, 3, -1
-                  t_sn(i,ksn-1)  = tmp_sn(ksn)
-               ENDDO
+                  DO ksn = ke_snow, 3, -1
+                     theta_w(i,ksn-1)  = tmp_sn(ksn)
+                  ENDDO
 
-               ! nodal temperature
-               tmp_sn_n(1:ke_snow+1) = t_sn_n(i,1:ke_snow+1)
-               do ksn = ke_snow+1,3,-1
-                  t_sn_n(i,ksn-1) = tmp_sn_n(ksn)
-               enddo
+                  ! Layer temperature
+                  tmp_sn(1:ke_snow) = t_sn(i,1:ke_snow)
 
-               ! -------------------
-               ! Add new snow layer and assign properties
-               ! -------------------
+                  DO ksn = ke_snow, 3, -1
+                     t_sn(i,ksn-1)  = tmp_sn(ksn)
+                  ENDDO
 
-               ! Limit top layer index it can/should only be ke_snow here
-               top(i) = MIN(top(i) + 1 , ke_snow)
+                  ! nodal temperature
+                  tmp_sn_n(1:ke_snow+1) = t_sn_n(i,1:ke_snow+1)
+                  do ksn = ke_snow+1,3,-1
+                     t_sn_n(i,ksn-1) = tmp_sn_n(ksn)
+                  enddo
 
-               ! Assign properties
-               dzm_sn(i,top(i))   = hn_sn(i)/rho_hn(i)
+                  ! -------------------
+                  ! Add new snow layer and assign properties
+                  ! -------------------
 
-               rho_sn(i,top(i))   = rho_hn(i)
+                  ! Limit top layer index it can/should only be ke_snow here
+                  top(i) = MIN(top(i) + 1 , ke_snow)
 
-               theta_i(i,top(i))  = rho_hn(i) / rho_i
-               theta_w(i,top(i))  = 0.0_wp           ! new snow is always dry
-               theta_a(i,top(i))  = 1.0_wp - theta_i(i,top(i)) - theta_w(i,top(i))
+                  ! Assign properties
+                  dzm_sn(i,top(i))   = hn_sn(i)/rho_hn(i)
 
-               t_sn_n(i,top(i) + 1) = t_sn_n(i,top(i))
-               t_sn(i,top(i))       = 0.5_wp * (t_sn_n(i,top(i)) + t_sn_n(i,top(i)+1))
+                  rho_sn(i,top(i))   = rho_hn(i)
 
+                  theta_i(i,top(i))  = rho_hn(i) / rho_i
+                  theta_w(i,top(i))  = 0.0_wp           ! new snow is always dry
+                  theta_a(i,top(i))  = 1.0_wp - theta_i(i,top(i)) - theta_w(i,top(i))
+
+                  t_sn_n(i,top(i) + 1) = t_sn_n(i,top(i))
+                  t_sn(i,top(i))       = 0.5_wp * (t_sn_n(i,top(i)) + t_sn_n(i,top(i)+1))
+
+               ELSE
+                  dzm_sn_new           = dzm_sn(i,top(i)) + hn_sn(i)/rho_hn(i)
+                  rho_sn(i,top(i))     = (dzm_sn(i,top(i)) * rho_sn(i,top(i)) + hn_sn(i)) / dzm_sn_new
+                  theta_i(i,top(i))    = (theta_i(i,top(i)) * dzm_sn(i,top(i)) + (hn_sn(i)/rho_i)) &
+                                         / dzm_sn_new
+                  theta_w(i,top(i))    = theta_w(i,top(i)) * dzm_sn(i,top(i)) / dzm_sn_new
+                  theta_a(i,top(i))    = 1.0_wp - theta_i(i,top(i)) - theta_w(i,top(i))
+
+                  dzm_sn(i,top(i))     = dzm_sn_new
+               ENDIF
                ! Reset new snow storage
                hn_sn(i) = 0.0_wp
 
