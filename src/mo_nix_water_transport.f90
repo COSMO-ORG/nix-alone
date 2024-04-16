@@ -256,9 +256,9 @@ CONTAINS
 ! + Begin subroutine: water_transport
 ! ============================================================================
 
-   SUBROUTINE water_transport(nvec, ivstart, ivend, ke_soil, ke_snow  , &
-   &                     top, lhflx_sn, dt, dzm_sn, rho_sn       , &
-   &                     theta_i, theta_w, theta_a, hcap_sn      , &
+   SUBROUTINE water_transport(nvec, ivstart, ivend, ke_soil, ke_snow    , &
+   &                     top, lhflx_sn, zrain_rate, dt, dzm_sn, rho_sn  , &
+   &                     theta_i, theta_w, theta_a, hcap_sn             , &
    &                     runoff_sn, t_sn)
 
       ! Subroutine arguments
@@ -271,6 +271,9 @@ CONTAINS
 
       INTEGER, DIMENSION(nvec), INTENT(IN) :: &
          top                    ! top layer index
+
+      REAL (KIND=wp), DIMENSION(nvec), INTENT(IN) :: &
+         zrain_rate             ! rainfall rate
 
       REAL (KIND=wp), DIMENSION(nvec), INTENT(INOUT) :: &
          lhflx_sn           , & ! latent heat flux
@@ -357,6 +360,12 @@ CONTAINS
 
          ENDDO ! end of ksn
 
+         ! -----------------------------------------------------------------------
+         ! + Add Rainfall
+         ! -----------------------------------------------------------------------
+         IF(top(i) .GE. 1 .AND. zrain_rate(i) .GT. 0.0_wp) THEN ! snow on the ground
+            theta_w(i,top(i)) = theta_w(i,top(i)) + (zrain_rate(i) * dt) / dzm_sn(i,top(i))
+         ENDIF
 
          ! --------------------------
          ! Now start moving the water and adjust properties accordingly
