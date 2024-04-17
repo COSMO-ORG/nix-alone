@@ -201,8 +201,8 @@ CONTAINS
             write(22,'(A)') "altitude     = -999"
             write(22,'(A)') "nodata       = -999"
             write(22,'(A)') "fields       = timestep TA QI VW P PSUM PSUM_PH HS &
-&                                           SWE TSS HN MS_SN_RUNOFF SWR_NET &
-&                                           ISWR RSWR ILWR OLWR ALBEDO SHF LHF EBAL"
+                                           &SWE TSS HN MS_SN_RUNOFF SWR_NET &
+                                           &ISWR RSWR ILWR OLWR ALBEDO SHF LHF EBAL"
             write(22,'(A)') "[DATA]"
             close(22)
          ENDIF
