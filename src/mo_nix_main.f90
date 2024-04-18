@@ -375,7 +375,7 @@ CONTAINS
       & t_sn, t_sn_n, &
       & swflx_sn_abs,lwflx_sn_dn, &
       & lwflx_sn_up,lhflx_sn, &
-      & shflx_sn,  &
+      & shflx_sn,zrain_rate, &
       & hcon_so, &
       & t_so,dt,t_sn_sfc,tch_sn,rho_sn, t, theta_w)
 
@@ -423,9 +423,9 @@ CONTAINS
 
 
       ! Call main water transport routine
-      CALL water_transport(nvec, ivstart, ivend, ke_soil, ke_snow  , &
-      &               top, lhflx_sn, dt, dzm_sn, rho_sn       , &
-      &               theta_i, theta_w, theta_a, hcap_sn      , &
+      CALL water_transport(nvec, ivstart, ivend, ke_soil, ke_snow   , &
+      &               top, lhflx_sn, zrain_rate, dt, dzm_sn, rho_sn , &
+      &               theta_i, theta_w, theta_a, hcap_sn            , &
       &               runoff_sn, t_sn)
 
 

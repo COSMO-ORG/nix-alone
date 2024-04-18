@@ -2,7 +2,7 @@ module mo_nix_heat_equation
 
    use mo_kind,                    only: wp
    use mo_physical_constants,      only: stbo
-   use mo_nix_constants,           only: eps_div, e_snow
+   use mo_nix_constants,           only: eps_div, e_snow, specific_heat_water
 ! ------------------------------------------------------------------------------
 ! declarations
 ! ------------------------------------------------------------------------------
@@ -285,7 +285,7 @@ contains
    & t_sn, t_sn_n, &
    & swflx_sn_abs,lwflx_sn_dn, &
    & lwflx_sn_up,lhflx_sn, &
-   & shflx_sn,  &
+   & shflx_sn,zrain_rate, &
    & hcon_so, &
    & t_so,dt,t_sn_sfc, tch_sn, rho_sn, t, theta_w)
 
@@ -326,6 +326,7 @@ contains
          ddU
 
       real (kind=wp), dimension(nvec), intent(in) :: &
+         zrain_rate         , & ! rainfall rate
          hcon_so            , & ! < soil layer conductivity
          t_so                   ! <            temperature
 
@@ -349,7 +350,7 @@ contains
       real(kind=wp), dimension(ke_snow+1) :: a_matrix,b_matrix,c_matrix,d_matrix
       real(kind=wp) :: emiss, t_emiss, coeff, delta_rad
       real(kind=wp) :: c, k, maxddU
-      real(kind=wp) :: alpha_shf, gamma_soil
+      real(kind=wp) :: alpha_shf, gamma_r, gamma_soil
 
 
       do i = ivstart, ivend
@@ -377,6 +378,9 @@ contains
                else
                   alpha_shf = shflx_sn(i) / ( t(i) - t_sn_sfc(i) )
                endif
+
+               ! Exchange coefficient for rain energy
+               gamma_r = zrain_rate(i) * specific_heat_water;
 
                gamma_soil = 0.0_wp !(hcon_so(i)/0.005_wp) ! VS: length of the top soil layer
 
@@ -414,17 +418,19 @@ contains
                      if(theta_w(i,ksn) .gt. 0.0_wp) then
                         ! Explicit
                         d_matrix(ksn+1) = d_matrix(ksn+1) + &
-                        &                 + (lwflx_sn_dn(i) & ! Net longwave radiation
+                        &                 + (lwflx_sn_dn(i) &                                         ! Net longwave radiation
                         &                 - e_snow*stbo*t_sn_n(i,ksn+1)*t_sn_n(i,ksn+1)*t_sn_n(i,ksn+1)*t_sn_n(i,ksn+1)) &
-                        &                 + lhflx_sn(i)     & ! Latent heat flux
-                        &                 + shflx_sn(i)       ! Sensible heat flux
+                        &                 + lhflx_sn(i)     &                                         ! Latent heat flux
+                        &                 + shflx_sn(i)     &                                         ! Sensible heat flux
+                        &                 + gamma_r * (t(i) - t_sn_n(i,ksn+1))                        ! Rain energy
                      else
                         ! Implicit
                         d_matrix(ksn+1) = d_matrix(ksn+1) + lhflx_sn(i)                               ! Latent heat flux
                         d_matrix(ksn+1) = d_matrix(ksn+1) + alpha_shf * t(i)                          ! Sensible heat flux linearization
                         d_matrix(ksn+1) = d_matrix(ksn+1) + delta_rad * t_emiss                       ! Longwave radiation linearization
-                        b_matrix(ksn+1) = b_matrix(ksn+1) + alpha_shf + delta_rad
-                        d_matrix(ksn+1) = d_matrix(ksn+1) - (alpha_shf + delta_rad) * t_sn_n(i,ksn+1)
+                        d_matrix(ksn+1) = d_matrix(ksn+1) + gamma_r * t(i)                            ! Rain energy linearization
+                        b_matrix(ksn+1) = b_matrix(ksn+1) + alpha_shf + delta_rad + gamma_r
+                        d_matrix(ksn+1) = d_matrix(ksn+1) - (alpha_shf + delta_rad + gamma_r) * t_sn_n(i,ksn+1)
                      endif
                   endif
 
