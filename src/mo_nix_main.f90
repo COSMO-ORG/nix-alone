@@ -65,7 +65,7 @@ MODULE mo_nix_main
    USE mo_nix_stratigraphy,    ONLY: nix_stratigraphy, &
       split_bottom_layer
 
-   USE mo_nix_heat_equation,   ONLY: heat_equation_wrapper
+   USE mo_nix_heat_equation,   ONLY: heat_equation_implicit
 
    USE mo_nix_substrate,       ONLY: calculate_soil_properties
 
@@ -369,8 +369,8 @@ CONTAINS
       ! Section 2.2 - Heat equation main routine
       ! ----------------------
 
-      CALL heat_equation_wrapper(nvec, ivstart, ivend, &
-      & ke_snow, top,  &
+      CALL heat_equation_implicit(nvec, ivstart, ivend, &
+      & ke_snow, ke_soil, top,  &
       & dzm_sn, hcon_sn, hcap_sn, hdif_sn   , &
       & t_sn, t_sn_n, &
       & swflx_sn_abs,lwflx_sn_dn, &
