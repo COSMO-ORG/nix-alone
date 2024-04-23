@@ -34,10 +34,10 @@ MODULE mo_nix_stratigraphy
    USE mo_physical_constants,      ONLY: t0_melt => tmelt   , &  ! absolute zero for temperature
       rho_w   => rhoh2o       ! density if liquid water
 
-   USE mo_nix_constants,             ONLY: eps_div
+   USE mo_nix_constants,             ONLY: eps_div, min_newsnow_layer
 
    USE mo_nix_constants,           ONLY: rho_i
-   USE mo_nix_config,              ONLY: min_newsnow_layer, min_height_layer, max_height_layer
+   USE mo_nix_config,              ONLY: min_height_layer, max_height_layer
 
 
 ! ------------------------------------------------------------------------------
