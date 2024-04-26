@@ -61,8 +61,8 @@ runNIX() {
     popd
 
     /usr/bin/time -a -o 'timings.txt' -f "NIX ${nlayer}L ${ts}s : %e" ../nix > ${stnfile}.${nlayer}layers.out
-    export TZ=UTC; awk -v dt=${ts} -v t=2021-10-01T00:00 -F, 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {print} else {if(/^0500/) {print "0500," strftime("%Y-%m-%dT%H:%M:%S", d+dt*$2)} else {print}}; if(/\[DATA\]/) {data=1}}' output.pro > ${stnfile}.${nlayer}.pro
-    export TZ=UTC; awk -v dt=${ts} -v t=2021-10-01T00:00 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {if(/^fields/) {gsub(/timestep/, "TIMESTAMP", $0)}; print} else {printf("%s", strftime("%Y-%m-%dT%H:%M:%S", d+dt*$1)); for(i=2; i<=NF; i++) {printf " %s", $i}; printf "\n"}; if(/\[DATA\]/) {data=1}}' output.smet > ${stnfile}.${nlayer}.smet
+    export TZ=UTC; awk -v dt=${ts} -v t=${timespan[0]} -F, 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {print} else {if(/^0500/) {print "0500," strftime("%Y-%m-%dT%H:%M:%S", d+dt*$2)} else {print}}; if(/\[DATA\]/) {data=1}}' output.pro > ${stnfile}.${nlayer}.pro
+    export TZ=UTC; awk -v dt=${ts} -v t=${timespan[0]} 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {if(/^fields/) {gsub(/timestep/, "TIMESTAMP", $0)}; print} else {printf("%s", strftime("%Y-%m-%dT%H:%M:%S", d+dt*$1)); for(i=2; i<=NF; i++) {printf " %s", $i}; printf "\n"}; if(/\[DATA\]/) {data=1}}' output.smet > ${stnfile}.${nlayer}.smet
     rm output.pro output.smet
 }
 
@@ -94,6 +94,7 @@ runSNOWPACK() {
 for ts in ${resolutions}
 do
     stnfile="WFJ_forcing_${ts}s.txt"
+    timespan=($(awk '{ts2=$1; if(/\[DATA\]/) {getline; ts1=$1}} END {print ts1, ts2}' SNOWPACK/WFJ2_${ts}s.smet))
     for nl in ${numberoflayer}
     do
         runNIX
