@@ -109,10 +109,10 @@ CONTAINS
       REAL    (KIND = wp), PARAMETER ::  &
 
          rho_hn_min = 100.0_wp     , &
-         rho_hn_max = 150.0_wp
+         rho_hn_max = 250.0_wp
 
       INTEGER ::                              &
-         itype_snow_density = 2
+         itype_snow_density = 1
 
 
       ! ------------------------------------------------------------------------------
@@ -126,7 +126,25 @@ CONTAINS
          ! ---------------------
 
          IF(itype_snow_density == 1) THEN
+    ! -------------------------
+    ! Parameterisation - SNOWPACK
+    ! -------------------------
+      ! Initiations ...
+      vw  = MAX(2.0_wp, uv(i))    ! Lower boundary of wind speed - 2 m/s
+      t_c = t_a(i) - 273.15_wp    ! Temperature- Kelvin to Celsius
 
+      ! ... power law argument
+      IF(t_c .LT. -14.0_wp) THEN
+        arg = beta01 + beta1*t_c + beta2*ASIN(SQRT(rh)) + beta3*LOG10(vw)
+      ELSE
+        arg = beta01 + beta1*t_c + beta2*ASIN(SQRT(rh)) + beta3*LOG10(vw) + beta02
+      ENDIF
+
+      ! Caclualte new snow density
+      rho_hn(i) = 10.0_wp**arg
+
+      ! Limit new snow density
+      rho_hn(i) = MAX(rho_hn_min, MIN(rho_hn(i), rho_hn_max))
 
 
          ENDIF
@@ -156,7 +174,6 @@ CONTAINS
          ! ---------------------
          ! Apply limits
          ! ---------------------
-
          rho_hn(i) = MAX(rho_hn_min, MIN(rho_hn(i), rho_hn_max))
 
 
