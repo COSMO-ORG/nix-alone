@@ -132,7 +132,9 @@ CONTAINS
 
              dzm_sn(i,ksn-1)      = dzm_sn(i,ksn) + dzm_sn(i,ksn-1)                                            ! layer thickness
 
-                  t_sn_n(i,ksn) = 2.0_wp * t_sn(i,ksn-1) - t_sn_n(i,ksn-1) ! adjusting nodal temperature for the upper node of the merged cell
+
+             t_sn_n(i,ksn) = 2.0_wp * t_sn(i,ksn-1) - t_sn_n(i,ksn-1) ! adjusting nodal temperature for the upper node of the merged cell
+
 
              ! ... and reset roperties - FIXME: Doing this here means we have to give additional fields we don't need here to the
              !                                  subroutine. Doing this reset in update_nix_state() might make mor sense but would
