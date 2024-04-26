@@ -23,13 +23,15 @@ fi
 for target_resolution in ${target_resolutions}
 do
 	echo "IMPORT_BEFORE = ./io_base.ini" > io.ini
+	echo "[Input]" >> io.ini
+	echo "STATION1				= ${metfile}" >> io.ini
 	echo "[Interpolations1D]" >> io.ini
-	echo "TOT_PREC::resample = none" >> io.ini
-	echo "TOT_PREC::accumulate::period    = ${target_resolution}" >> io.ini
+	echo "TOT_PREC::resample		= none" >> io.ini
+	echo "TOT_PREC::accumulate::period	= ${target_resolution}" >> io.ini
 
 	if (( ${target_resolution} == 20 )); then
 		echo "[Filters]" >> io.ini
-		echo "TOT_PREC::filter2	= mult" >> io.ini
+		echo "TOT_PREC::filter2		= mult" >> io.ini
 		echo "TOT_PREC::arg2::type	= CST" >> io.ini
 		echo "TOT_PREC::arg2::cst	= 45" >> io.ini
 	fi
