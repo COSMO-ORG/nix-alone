@@ -48,7 +48,10 @@ MODULE mo_nix_config
       min_newsnow_layer = 0.002_wp              , & ! minimum new snow layer thickness, precip below this threshold is kept in
                                                     ! storage, until sufficient precipitation has accumulated to build min_newsnow_layer (m)
       min_height_layer  = 0.01_wp               , & ! minimum layer thickness (m)
-      max_height_layer  = 0.05_wp                   ! maximum layer thickness (m)
+      max_height_layer  = 0.05_wp               , & ! maximum layer thickness (m)
+
+      alpha_sn_min      = 0.60_wp               , & ! minimum snow albedo
+      alpha_sn_max      = 0.90_wp                   ! maximum snow albedo
 
    REAL (KIND = wp) :: &
 

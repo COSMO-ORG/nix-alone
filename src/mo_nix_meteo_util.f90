@@ -31,8 +31,6 @@ MODULE mo_nix_meteo_util
 
    USE mo_kind,                    ONLY: wp
 
-   USE mo_nix_config,              ONLY: z0_sn
-
    USE mo_physical_constants,      ONLY: r_d     => rd      , & ! gas constant for dry air
       rvd_m_o => vtmpc1  , & ! r_v/r_d - 1
       lh_v    => alv     , & ! latent heat of vapourization
@@ -41,6 +39,8 @@ MODULE mo_nix_meteo_util
       t0_melt => tmelt       ! melting temperature of ice/snow
 
    USE mo_nix_constants,             ONLY: ctalb, eps_div
+
+   USE mo_nix_config,              ONLY: alpha_sn_min, alpha_sn_max, z0_sn
 
 ! ------------------------------------------------------------------------------
 ! DECLARATIONS
@@ -406,12 +406,6 @@ CONTAINS
          ksn                    ! < loop index in z-direction
 
 
-      REAL (KIND=wp), PARAMETER            :: &
-
-         a1 = 0.90_wp       , &    ! coefficients for the albedo parameterization
-         a0 = 0.60_wp
-
-
       REAL (KIND=wp) :: &
 
          k_ext                     ! extinction coeficient
@@ -426,17 +420,17 @@ CONTAINS
          ! + Calaculate albedo
          ! -------------------------
          ! IF(t_sn_sfc(i) - 273.15_wp .LE. -2.0_wp) THEN
-         !    alpha_sn(i) = a1
+         !    alpha_sn(i) = alpha_sn_max
          ! ELSE
-         !    alpha_sn(i)  = a1 - 0.15_wp*(a1-a0)*((MIN(t_sn_sfc(i), t0_melt) - 273.15_wp) + 2.0_wp)
+         !    alpha_sn(i)  = alpha_sn_max - 0.15_wp*(alpha_sn_max-alpha_sn_min)*((MIN(t_sn_sfc(i), t0_melt) - 273.15_wp) + 2.0_wp)
          ! ENDIF
 
          if( t_sn_sfc(i) .ge. 273.0_wp ) then
-            alpha_sn(i) = a0 + (alpha_sn(i) - a0 ) * exp( (-1.0_wp/(200.0_wp*3600.0_wp)) * dt )
+            alpha_sn(i) = alpha_sn_min + (alpha_sn(i) - alpha_sn_min ) * exp( (-1.0_wp/(200.0_wp*3600.0_wp)) * dt )
          else
-            alpha_sn(i) = a0 + (alpha_sn(i) - a0 ) * exp( (-1.0_wp/(480.0_wp*3600.0_wp)) * dt )
+            alpha_sn(i) = alpha_sn_min + (alpha_sn(i) - alpha_sn_min ) * exp( (-1.0_wp/(480.0_wp*3600.0_wp)) * dt )
          endif
-         alpha_sn(i) = min(a1, max(a0, alpha_sn(i)))
+         alpha_sn(i) = min(alpha_sn_max, max(alpha_sn_min, alpha_sn(i)))
 
          ! -------------------------
          ! + Calculate upward short-wave radiation
