@@ -35,7 +35,8 @@ runNIX() {
 
     # Make sure the output frequency is the same in real time independent of chosen model timestep
     output_freq_tgt=3600
-    output_freq=$(echo ${ts} | awk -v sec_between=${output_freq_tgt} '{printf "%d", sec_between/$1}')
+    # Note: if output frequency is higher than model time step, the output_freq is forced to 1 (i.e., every timestep)
+    output_freq=$(echo ${ts} | awk -v sec_between=${output_freq_tgt} '{printf "%d", (sec_between<$1)?(1):(sec_between/$1)}')
 
     pushd ../
 
