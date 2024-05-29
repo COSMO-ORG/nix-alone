@@ -116,26 +116,30 @@ CONTAINS
 
                IF(dzm_sn(i,ksn) .LT. min_height_layer .OR. theta_i(i,ksn) .LT. 0.01_wp) THEN ! layer is quite thin
 
-                  ! Aggregate with lower layer - Adjust properties ...
-                  theta_i(i,ksn-1)     = (theta_i(i,ksn)*dzm_sn(i,ksn)                                      &
-                     + theta_i(i,ksn-1)*dzm_sn(i,ksn-1)) / (dzm_sn(i,ksn) + dzm_sn(i,ksn-1))      ! volumetric ice content
+                IF(dzm_sn(i,ksn) .GT. 0.0_wp) THEN                                           ! only merge layers with non-zero depth
 
-                  theta_i_old(i,ksn-1) = (theta_i_old(i,ksn)*dzm_sn(i,ksn)                                      &
-                     + theta_i_old(i,ksn-1)*dzm_sn(i,ksn-1)) / (dzm_sn(i,ksn) + dzm_sn(i,ksn-1))  ! volumetric ice content
+                   ! Aggregate with lower layer - Adjust properties ...
+                    theta_i(i,ksn-1)     = (theta_i(i,ksn)*dzm_sn(i,ksn)                                      &
+                       + theta_i(i,ksn-1)*dzm_sn(i,ksn-1)) / (dzm_sn(i,ksn) + dzm_sn(i,ksn-1))      ! volumetric ice content
 
-                  theta_w(i,ksn-1)     = (theta_w(i,ksn)*dzm_sn(i,ksn)                                      &
-                     + theta_w(i,ksn-1)*dzm_sn(i,ksn-1)) / (dzm_sn(i,ksn) + dzm_sn(i,ksn-1))      ! volumetric water content
+                    theta_i_old(i,ksn-1) = (theta_i_old(i,ksn)*dzm_sn(i,ksn)                                      &
+                       + theta_i_old(i,ksn-1)*dzm_sn(i,ksn-1)) / (dzm_sn(i,ksn) + dzm_sn(i,ksn-1))  ! volumetric ice content
 
-                  t_sn(i,ksn-1)        = ( t_sn(i,ksn)*dzm_sn(i,ksn) * rho_sn(i,ksn)                         &
-                     + t_sn(i,ksn-1)*dzm_sn(i,ksn-1) * rho_sn(i,ksn-1) ) /  &
-                  & (dzm_sn(i,ksn)*rho_sn(i,ksn) + dzm_sn(i,ksn-1) * rho_sn(i,ksn-1) )      ! volumetric ice content
+                    theta_w(i,ksn-1)     = (theta_w(i,ksn)*dzm_sn(i,ksn)                                      &
+                       + theta_w(i,ksn-1)*dzm_sn(i,ksn-1)) / (dzm_sn(i,ksn) + dzm_sn(i,ksn-1))      ! volumetric water content
 
-                  ! CHECK THE ABOVE REFORMULATION for t_sn !!!!!
+                    t_sn(i,ksn-1)        = ( t_sn(i,ksn)*dzm_sn(i,ksn) * rho_sn(i,ksn)                         &
+                       + t_sn(i,ksn-1)*dzm_sn(i,ksn-1) * rho_sn(i,ksn-1) ) /  &
+                    & (dzm_sn(i,ksn)*rho_sn(i,ksn) + dzm_sn(i,ksn-1) * rho_sn(i,ksn-1) )      ! volumetric ice content
 
-                  dzm_sn(i,ksn-1)      = dzm_sn(i,ksn) + dzm_sn(i,ksn-1)                          ! layer thickness
+                    ! CHECK THE ABOVE REFORMULATION for t_sn !!!!!
+
+                    dzm_sn(i,ksn-1)      = dzm_sn(i,ksn) + dzm_sn(i,ksn-1)                          ! layer thickness
 
 
-                  t_sn_n(i,ksn) = 2.0_wp * t_sn(i,ksn-1) - t_sn_n(i,ksn-1) ! adjusting nodal temperature for the upper node of the merged cell
+                    t_sn_n(i,ksn) = 2.0_wp * t_sn(i,ksn-1) - t_sn_n(i,ksn-1) ! adjusting nodal temperature for the upper node of the merged cell
+
+                  ENDIF
 
                   ! ... and reset properties - FIXME: Doing this here means we have to give additional fields we don't need here to the
                   !                                   subroutine. Doing this reset in update_nix_state() might make more sense but would
