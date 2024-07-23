@@ -5,8 +5,12 @@ module input
 ! ------------------------------------------------------------------------------
 
    use mo_kind, only : wp           ! kind-type parameter for real variables
-   use mo_nix_config , only : nvec
+   use mo_nix_config, only :   &
+      ke_snow                , &     ! maximum number of snow layers
+      ke_soil                , &     ! number of soil layers
+      nvec
    use fields
+   use allocation
 
    implicit none
 
@@ -116,6 +120,87 @@ contains
 
    end subroutine read_input
 
+
+! ------------------------------------------------------------------------------
+! + begin subroutine read_state
+! ------------------------------------------------------------------------------
+   subroutine read_state()
+! ------------------------------------------------------------------------------
+! description:
+!   this routine reads initial state for the snow cover scheme
+! ------------------------------------------------------------------------------
+
+      integer   :: &
+         i, j, ksn,            &  ! loop index
+         nNodes
+
+      integer, parameter :: &
+         ivstart = 1, ivend = 1
+
+      character(*), parameter :: state_file = "./inp/icon_15min_2021.state"
+
+      character(len=256) :: line = "", dummy = ""
+
+      IF (nvec .ne. 1) THEN
+
+         write(0,*) "ERROR: computation domain size (nvec) != 1! This is not yet supported for itype_nix_start > 1"
+
+      ENDIF
+
+      open(unit=20, status = "old", file=state_file)
+
+      ! Read first line
+      read(20, '(A)') line
+      read(line, '(A8,I6)') dummy, ke_snow
+
+      ! Read header row
+      read(20,*)
+
+      call allocate_fields()
+
+      ! Read layer data
+      DO i = ivstart, ivend ! initial horizontal loop
+
+         DO ksn = 1, ke_snow
+
+            read(20, *) j, dzm_sn(i, ksn), t_sn(i, ksn), theta_a(i, ksn), theta_w(i, ksn), theta_i(i, ksn)
+
+         ENDDO
+
+      ENDDO
+
+      ! Read header rows
+      read(20, '(A)') line
+      read(line, '(A7,I6)') dummy, nNodes
+      read(20,*)
+
+      IF (nNodes .NE. ke_snow+1) THEN
+
+         write(0,*) nNodes, ke_snow, line
+         write(0,*) "ERROR: number of nodes != number of snow layers + 1 in snow state file!"
+         CALL EXIT(1)
+
+      ENDIF
+
+
+      ! Read nodal data
+      DO i = ivstart, ivend ! initial horizontal loop
+
+         DO ksn = 1, ke_snow+1
+
+            read(20, *) j, t_sn_n(i, ksn)
+
+        ENDDO
+
+      ENDDO
+
+      close(20)
+
+! ------------------------------------------------------------------------------
+! - end subroutine read_state
+! ------------------------------------------------------------------------------
+
+   end subroutine read_state
 
 ! =============================================================================
 ! - end module for input

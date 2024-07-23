@@ -31,7 +31,7 @@ MODULE mo_nix_init
 
    USE mo_kind,                    ONLY: wp
 
-   USE mo_nix_config,              ONLY: ke_snow, nvec
+   USE mo_nix_config,              ONLY: ke_snow, nvec, itype_nix_start
 
 ! ------------------------------------------------------------------------------
 ! DECLARATIONS
@@ -97,32 +97,71 @@ CONTAINS
          i            , &     ! loop index in x-direction
          ksn                  ! loop index in y-direction
 
-      ! ------------------------------------------------------------------------------
-      ! Section 1 - Hard cold start - All snow is wiped out.
-      ! ------------------------------------------------------------------------------
+      IF (itype_nix_start .EQ. 1) THEN
 
-      !Set snow height and top index to zero
-      DO i = ivstart, ivend
+         ! ------------------------------------------------------------------------------
+         ! Section 1 - Hard cold start - All snow is wiped out.
+         ! ------------------------------------------------------------------------------
 
-         h_snow(i) = 0.0_wp      ! clear all snow
-         top_sn(i) = 0           ! rest top level index
-
-         hn_sn(i)  = 0.0_wp      ! reset new snow amounts - storage
-
-      END DO
-
-      ! Reset snow profiles
-      DO ksn = 1, ke_snow
+         !Set snow height and top index to zero
          DO i = ivstart, ivend
 
-            dzm_sn(i,ksn)  = 0.0_wp
-            t_sn(i,ksn)    = 0.0_wp
-            theta_i(i,ksn) = 0.0_wp
-            theta_w(i,ksn) = 0.0_wp
-            theta_a(i,ksn) = 0.0_wp
+            h_snow(i) = 0.0_wp      ! clear all snow
+            top_sn(i) = 0           ! rest top level index
+
+            hn_sn(i)  = 0.0_wp      ! reset new snow amounts - storage
+
+         END DO
+
+         ! Reset snow profiles
+         DO ksn = 1, ke_snow
+            DO i = ivstart, ivend
+
+               dzm_sn(i,ksn)  = 0.0_wp
+               t_sn(i,ksn)    = 0.0_wp
+               theta_i(i,ksn) = 0.0_wp
+               theta_w(i,ksn) = 0.0_wp
+               theta_a(i,ksn) = 0.0_wp
+
+            ENDDO
 
          ENDDO
-      ENDDO
+
+      ELSE IF (itype_nix_start .EQ. 3) THEN
+               ! ------------------------------------------------------------------------------
+         ! Section 3 - Warm start - required nix fields are taken from initial condition
+         ! ------------------------------------------------------------------------------
+
+         !Set snow height and top index to zero
+         DO i = ivstart, ivend
+
+            top_sn(i) = 0
+            hn_sn(i)  = 0.0_wp      ! reset new snow amounts - storage
+
+            DO ksn = 1, ke_snow
+
+               IF (dzm_sn(i,ksn) .GT. 0) THEN
+                  top_sn(i) = ksn                            ! update top level index
+                  h_snow(i) = h_snow(i) + dzm_sn(i,ksn)      ! update snow depth
+               ELSE
+                  ! Reset remainder of snow profile
+                  dzm_sn(i,ksn)  = 0.0_wp
+                  t_sn(i,ksn)    = 0.0_wp
+                  theta_i(i,ksn) = 0.0_wp
+                  theta_w(i,ksn) = 0.0_wp
+                  theta_a(i,ksn) = 0.0_wp
+               ENDIF
+
+            ENDDO
+
+         ENDDO
+
+      ELSE
+
+         WRITE (0,*) "ERROR: unknown itype_nix_start: ", itype_nix_start
+         CALL EXIT (1)
+
+      ENDIF
 
 
 ! =============================================================================

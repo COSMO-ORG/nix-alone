@@ -37,10 +37,13 @@ MODULE mo_nix_config
 
    LOGICAL :: lnix        ! > run with the Swiss multi-layer snow model NIX
 
+   INTEGER ::  &
+      ke_snow = 10        ! > run with this amount of snow layers
+
    INTEGER, PARAMETER ::  &
-      ke_snow = 10      , & ! > run with this amount of snow layers
       ke_soil = 1       , & ! > run with this amount of soil layers
-      nvec    = 1
+      nvec    = 1       , &
+      itype_nix_start = 1
 
    REAL (KIND = wp), PARAMETER ::   &
       zdt               = 900.0_wp              , & ! model timestep : note this should correspond to the meteotimestep     (s)

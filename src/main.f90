@@ -9,6 +9,7 @@ program  main
    use mo_nix_constants             ! physical constants
    use mo_nix_main
    use mo_nix_init
+   use mo_nix_snow_util, only : update_nix_state
 
    integer :: n
 ! -------------------
@@ -18,7 +19,11 @@ program  main
 ! -------------------
 ! allocate all global arrays.
 !-------------------
-   call allocate_fields()
+   IF (itype_nix_start .EQ. 3) THEN
+      call read_state()       ! read_state will also allocate
+   ELSE
+      call allocate_fields()
+   ENDIF
 ! ---------------------------------------------------------------------------------
 ! + section i: initializations
 ! ---------------------------------------------------------------------------------
@@ -35,7 +40,25 @@ program  main
    &         hn_sn     , &
    &         top_sn    , &
    &         h_snow      )
-
+CALL update_nix_state(nvec   , &
+   &         ivstart   , &
+   &         ivend     , &
+   &         top_sn    , &
+   &         ke_snow   , &
+   &         dzm_sn    , &
+   &         rho_sn    , &
+   &         theta_i   , &
+   &         theta_w   , &
+   &         theta_a   , &
+   &         t_sn      , &
+   &         t_sn_n    , &
+   &         hm_sn     , &
+   &         zm_sn     , &
+   &         hcap_sn   , &
+   &         hcon_sn   , &
+   &         mass_sn   , &
+   &         h_snow    , &
+   &         t_sn_sfc )
 ! begin loop over number of timesteps
    do n = 1,nsteps,1
 
