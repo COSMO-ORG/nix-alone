@@ -74,7 +74,7 @@ contains
       ! read data into array
       ! -------------------
 
-      ! open unit nad read files
+      ! open unit and read files
       open(unit=20, status="old", file=file)
       do i = 1, nsteps, 1
          read(20, *, iostat=iostatus ) tmp(:,:)
@@ -118,7 +118,7 @@ contains
 
 
 ! =============================================================================
-! - end module for ...
+! - end module for input
 ! ==============================================================================
 
 

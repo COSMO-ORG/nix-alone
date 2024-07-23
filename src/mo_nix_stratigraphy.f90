@@ -461,7 +461,7 @@ CONTAINS
 
 
 !------------------------------------------------------------------------------
-! End of module mo_nix_blanc
+! End of module mo_nix_stratigraphy
 !------------------------------------------------------------------------------
 
 END MODULE mo_nix_stratigraphy

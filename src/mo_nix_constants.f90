@@ -70,7 +70,7 @@ MODULE mo_nix_constants
 
    INTEGER , PARAMETER :: itype_heatcond = 1
 !------------------------------------------------------------------------------
-! End of module mo_nix_blanc
+! End of module mo_nix_constants
 !------------------------------------------------------------------------------
 
 END MODULE mo_nix_constants
