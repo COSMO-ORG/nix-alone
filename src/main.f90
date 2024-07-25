@@ -122,7 +122,7 @@ CALL update_nix_state(nvec   , &
       ! Soil properties
       &     t_so (:,n)                       )
 
-      call write_output(nvec, 1, 1, n, pro_output_freq, smet_output_freq, &
+      call write_output(nvec, 1, 1, n, timestamp(i,n), pro_output_freq, smet_output_freq, &
         &                 top_sn, ke_snow, dzm_sn, rho_sn               , &
         &                 theta_i, theta_w, theta_a                     , &
         &                 t_sn, t_sn_n, hn_sn, t , alpha_sn)

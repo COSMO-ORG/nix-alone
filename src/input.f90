@@ -32,7 +32,10 @@ contains
          i , j          , &   ! loop index
          iostatus
 
-      real (kind=wp), allocatable  :: tmp(:,:)
+      ! These two variables are needed to prepare the forcing data, but they are not part of the global variables
+      real (kind=wp), allocatable  :: &
+         iswr_d(:,:),                 &
+         tot_prec(:,:)
 
       character(*), parameter :: file = "./inp/icon_15min_2021.inp"
 
@@ -41,6 +44,7 @@ contains
       ! -------------------
 
       open(unit=20, status = "old", file=file)
+      read(20,*)  ! Skip one header line
 
       nsteps = 0
 
@@ -52,36 +56,50 @@ contains
             nsteps = nsteps + 1
          end if
       end do
-      close(20)
+      rewind(20)
 
 
       ! -------------------
       ! allocate array's
       ! -------------------
+      allocate ( timestamp(nvec,nsteps) ) ; timestamp = ""
+      allocate ( tot_prec(nvec,nsteps) ) ; tot_prec = 0.0_wp
+      allocate ( prr_con(nvec,nsteps) ) ; prr_con = 0.0_wp
+      allocate ( prs_con(nvec,nsteps) ) ; prs_con = 0.0_wp
+      allocate ( prr_gsp(nvec,nsteps) ) ; prr_gsp = 0.0_wp
+      allocate ( prs_gsp(nvec,nsteps) ) ; prs_gsp = 0.0_wp
+      allocate ( prg_gsp(nvec,nsteps) ) ; prg_gsp = 0.0_wp
+      allocate ( u(nvec,nsteps) )
+      allocate ( v(nvec,nsteps) )
+      allocate ( t(nvec,nsteps) )
+      allocate ( qv(nvec,nsteps) )
+      allocate ( ps(nvec,nsteps) )
+      allocate ( t_so(nvec,nsteps) )
+      allocate ( iswr(nvec,nsteps) )
+      allocate ( iswr_d(nvec,nsteps) )
+      allocate ( ilwr(nvec,nsteps) )
 
-      allocate (  tmp     (9,nsteps) )
-
-      allocate ( prr_con  (nvec,nsteps)) ; prr_con = 0.0_wp
-      allocate ( prs_con(nvec,nsteps)) ; prs_con = 0.0_wp
-      allocate ( prr_gsp(nvec,nsteps)) ; prr_gsp = 0.0_wp
-      allocate ( prs_gsp(nvec,nsteps)) ; prs_gsp = 0.0_wp
-      allocate ( prg_gsp(nvec,nsteps)) ; prg_gsp = 0.0_wp
-      allocate ( u(nvec,nsteps))
-      allocate ( v(nvec,nsteps))
-      allocate ( t(nvec,nsteps))
-      allocate ( qv(nvec,nsteps))
-      allocate ( ps(nvec,nsteps))
-      allocate ( t_so(nvec,nsteps))
-      allocate (iswr(nvec,nsteps))
-      allocate (ilwr(nvec,nsteps))
       ! -------------------
       ! read data into array
       ! -------------------
 
       ! open unit and read files
-      open(unit=20, status="old", file=file)
+      read(20,*)  ! Skip one header line
       do i = 1, nsteps, 1
-         read(20, *, iostat=iostatus ) tmp(:,:)
+         read (20, *, iostat=iostatus ) timestamp(nvec, i), &
+                                        t(nvec, i),         &
+                                        ps(nvec, i),        &
+                                        qv(nvec, i),        &
+                                        u(nvec, i),         &
+                                        v(nvec, i),         &
+                                        iswr(nvec, i),      &
+                                        iswr_d(nvec, i),    &
+                                        ilwr(nvec, i),      &
+                                        tot_prec(nvec, i),  &
+                                        prr_gsp(nvec, i),   &
+                                        prs_gsp(nvec, i),   &
+                                        prg_gsp(nvec, i),   &
+                                        t_so(nvec, i)
          if(iostatus/=0) then ! to avoid end of file error.
             exit
          endif
@@ -91,25 +109,28 @@ contains
       close(20)
 
       ! -------------------
-      ! assign data to array
+      ! further required preprocessing
       ! -------------------
       do i = 1, nvec
-         t        (i,:)    = tmp(1,:)   ! air temperature
-         ps       (i,:)    = tmp(2,:)   ! pressure
-         qv       (i,:)    = tmp(3,:)   ! specific humidity
-         u        (i,:)    = tmp(4,:)   ! wind speed
-         v        (i,:)    = 0.0_wp
-         iswr     (i,:)    = tmp(5,:) + tmp(6,:)  ! incoming short-wave radiation ( direct + diffuse)
-         ilwr     (i,:)    = tmp(7,:)   ! incoming long-wave radiation
-         !tot_prec (i,:)    = tmp(8,:)   ! total precipitation
-         t_so     (i,:)    = tmp(9,:)   ! soil temperature
+         iswr    (i,:)  = iswr   (i,:) + iswr_d (i,:) ! incoming short-wave radiation ( direct + diffuse)
+         iswr_d  (i,:)  = 0.0_wp
+         prr_con (i,:)  = prr_gsp(i,:)                ! rain rate
+         prs_con (i,:)  = prs_gsp(i,:) + prg_gsp(i,:) ! snow rate ( snow + graupel )
+         prr_gsp (i,:)  = 0.0_wp
+         prs_gsp (i,:)  = 0.0_wp
+         prg_gsp (i,:)  = 0.0_wp
 
+         ! Check if precipitation is partitioned for each time step
          do j = 1, nsteps
-            if ( t(i,j) > 275.15) then
-               prr_con(i,j) = tmp(8,j)
-            else
-               prs_con(i,j) = tmp(8,j)
+            if (tot_prec(i,j) > 0.0_wp .AND. prr_con(i,j) == 0.0_wp .AND. prs_con(i,j) == 0.0_wp ) then
+               ! If total precipitation is provided, but the phase is undetermined, use a simple air temperature threshold
+               if ( t(i,j) > 275.15 ) then
+                  prr_con(i,j) = tot_prec(i,j)
+               else
+                  prs_con(i,j) = tot_prec(i,j)
+               end if
             end if
+            tot_prec(i,j) = 0.0_wp
          end do
 
       end do

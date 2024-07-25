@@ -29,13 +29,16 @@ CONTAINS
 ! + Begin subroutine: write_output
 ! ============================================================================
 
-   SUBROUTINE write_output(nvec, ivstart, ivend, n, pro_output_freq, smet_output_freq, &
+   SUBROUTINE write_output(nvec, ivstart, ivend, n, timestamp, pro_output_freq, smet_output_freq, &
    &                 top, ke_snow, dzm_sn, rho_sn                                    , &
    &                 theta_i, theta_w, theta_a                                       , &
    &                 t_sn, t_sn_n, hn_sn, t , alpha_sn)
 
 
       ! Subroutine Arguments
+
+      CHARACTER(LEN=19), INTENT(IN) :: timestamp
+
       INTEGER, INTENT(IN)   :: &
          nvec            , & ! < array dimensions
          ivstart         , & ! < start index for computations in the parallel program
@@ -88,9 +91,6 @@ CONTAINS
 !       ! profile information
 !       ! ----------------------
 
-!       NOTE: in order to be able to visualize the *pro file with niViz.org, it is necessary to include timestamps. Use the following oneliner to achieve this (insert model timestep dt and initial timestamp t)
-!       export TZ=UTC; awk -v dt=900 -v t=2020-10-01T00:00 -F, 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {print} else {if(/^0500/) {print "0500," strftime("%Y-%m-%dT%H:%M:%S", d+dt*$2)} else {print}}; if(/\[DATA\]/) {data=1}}' output.pro > output2.pro
-
    IF (pro_output_freq .gt. 0) THEN
       DO i=ivstart,ivend
          IF (n .EQ. 1) THEN
@@ -120,13 +120,18 @@ CONTAINS
          IF (MOD(n, pro_output_freq) == 0) then
             open(unit=22, file=pro_output_file, status='old', action='write', access='sequential', &
                  form='formatted', position='append')
+            ! Write time step
+            write(22, '(A,(A2, A1, A2, A1, A4, A1, A2, A1, A2, A1, A2))', advance='yes') '0500,', &
+            timestamp(9:10), '.', &
+            timestamp(6:7), '.',  &
+            timestamp(1:4), ' ',  &
+            timestamp(12:13), ':',&
+            timestamp(15:16), ':',&
+            timestamp(18:19)
             IF (top(i) .EQ. 0) THEN
                ! Special case with no snow elements
-               write(22, '(A,I0)') '0500,', n
                write(22, '(A)') '0501,1,0'
             ELSE
-               ! Write time step
-               write(22, '(A,I0)', advance='yes') '0500,', n
                ! Layer spacing info
                write(22, '(A,I0)', advance='no') '0501,', top(i)
                DO ksn = 1, top(i), 1
@@ -185,9 +190,6 @@ CONTAINS
 !       ! timeseries information
 !       ! ----------------------
 
-!       NOTE: in order to be able to visualize the *pro file with niViz.org, it is necessary to include timestamps. Use the following oneliner to achieve this (insert model timestep dt and initial timestamp t)
-!       export TZ=UTC; awk -v dt=900 -v t=2020-10-01T00:00 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {if(/^fields/) {gsub(/timestep/, "TIMESTAMP", $0)}; print} else {printf("%s", strftime("%Y-%m-%dT%H:%M:%S", d+dt*$1)); for(i=2; i<=NF; i++) {printf " %s", $i}; printf "\n"}; if(/\[DATA\]/) {data=1}}' output.smet > output2.smet
-
    IF (smet_output_freq .gt. 0) THEN
       DO i=ivstart,ivend
          IF (n .EQ. 1) THEN
@@ -200,8 +202,8 @@ CONTAINS
             write(22,'(A)') "longitude    = -999"
             write(22,'(A)') "altitude     = -999"
             write(22,'(A)') "nodata       = -999"
-            write(22,'(A)') "fields       = timestep TA QI VW P PSUM PSUM_PH HS &
-                                           &SWE TSS HN MS_SN_RUNOFF SWR_NET &
+            write(22,'(A)') "fields       = timestamp timestep TA QI VW P PSUM PSUM_PH &
+                                           &HS SWE TSS HN MS_SN_RUNOFF SWR_NET &
                                            &ISWR RSWR ILWR OLWR ALBEDO SHF LHF EBAL"
             write(22,'(A)') "[DATA]"
             close(22)
@@ -209,7 +211,7 @@ CONTAINS
          IF (MOD(n, smet_output_freq) == 0) then
             open(unit=22, file=smet_output_file, status='old', action='write', access='sequential', &
                  form='formatted', position='append')
-               write(22, '(I0)', advance="no") n
+               write(22, '(A19,A1,I0)', advance="no") timestamp, " ", n
                ! TA
                write(22, '(AF0.3)', advance="no") " ", t(n)
                ! QI

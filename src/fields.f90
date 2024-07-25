@@ -41,6 +41,9 @@ module fields
    ! -------------------
    ! input
    ! ------------------
+   character (len=19), dimension(:,:), allocatable :: &
+      timestamp
+
    real (kind = wp), dimension(:,:), allocatable :: &
       prr_con    , & ! precipitation rate of rain, convective        (kg/m2*s)
       prs_con    , & ! precipitation rate of snow, convective        (kg/m2*s)
