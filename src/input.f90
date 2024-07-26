@@ -123,8 +123,8 @@ contains
          ! Check if precipitation is partitioned for each time step
          do j = 1, nsteps
             if (tot_prec(i,j) > 0.0_wp .AND. prr_con(i,j) == 0.0_wp .AND. prs_con(i,j) == 0.0_wp ) then
-               ! If total precipitation is provided, but the phase is undetermined, use a simple air temperature threshold
-               if ( t(i,j) > 275.15 ) then
+               ! If total precipitation is provided, but the phase is undetermined, use a simple air temperature threshold of 1.2C
+               if ( t(i,j) > 274.35 ) then
                   prr_con(i,j) = tot_prec(i,j)
                else
                   prs_con(i,j) = tot_prec(i,j)
