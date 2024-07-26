@@ -37,7 +37,7 @@ CONTAINS
 
       ! Subroutine Arguments
 
-      CHARACTER(LEN=19), INTENT(IN) :: timestamp
+      CHARACTER(LEN=19), INTENT(IN), DIMENSION(nvec) :: timestamp
 
       INTEGER, INTENT(IN)   :: &
          nvec            , & ! < array dimensions
@@ -122,12 +122,12 @@ CONTAINS
                  form='formatted', position='append')
             ! Write time step
             write(22, '(A,(A2, A1, A2, A1, A4, A1, A2, A1, A2, A1, A2))', advance='yes') '0500,', &
-            timestamp(9:10), '.', &
-            timestamp(6:7), '.',  &
-            timestamp(1:4), ' ',  &
-            timestamp(12:13), ':',&
-            timestamp(15:16), ':',&
-            timestamp(18:19)
+            timestamp(i)(9:10), '.', &
+            timestamp(i)(6:7), '.',  &
+            timestamp(i)(1:4), ' ',  &
+            timestamp(i)(12:13), ':',&
+            timestamp(i)(15:16), ':',&
+            timestamp(i)(18:19)
             IF (top(i) .EQ. 0) THEN
                ! Special case with no snow elements
                write(22, '(A)') '0501,1,0'
@@ -211,7 +211,7 @@ CONTAINS
          IF (MOD(n, smet_output_freq) == 0) then
             open(unit=22, file=smet_output_file, status='old', action='write', access='sequential', &
                  form='formatted', position='append')
-               write(22, '(A19,A1,I0)', advance="no") timestamp, " ", n
+               write(22, '(A19,A1,I0)', advance="no") timestamp(i), " ", n
                ! TA
                write(22, '(AF0.3)', advance="no") " ", t(n)
                ! QI
