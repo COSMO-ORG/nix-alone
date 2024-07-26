@@ -37,7 +37,7 @@ contains
          iswr_d(:,:),                 &
          tot_prec(:,:)
 
-      character(*), parameter :: file = "./inp/icon_15min_2021.inp"
+      character(*), parameter :: file = "./inp/nix.inp"
 
       ! -------------------
       ! count numbers of rows
@@ -158,7 +158,7 @@ contains
       integer, parameter :: &
          ivstart = 1, ivend = 1
 
-      character(*), parameter :: state_file = "./inp/icon_15min_2021.state"
+      character(*), parameter :: state_file = "./inp/nix.state"
 
       character(len=256) :: line = "", dummy = ""
 
