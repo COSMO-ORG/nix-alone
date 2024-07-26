@@ -12,6 +12,8 @@ program  main
    use mo_nix_snow_util, only : update_nix_state
 
    integer :: n
+   integer, parameter :: &
+      ivstart = 1, ivend = 1
 ! -------------------
 ! read meteorological input
 ! -------------------
@@ -28,10 +30,10 @@ program  main
 ! + section i: initializations
 ! ---------------------------------------------------------------------------------
 
-   call nix_init(nvec      , &
+   call nix_init(nvec  , &
    &         ke_snow   , &
-   &         1   , &
-   &         1   , &
+   &         ivstart   , &
+   &         ivend     , &
    &         t_sn      , &
    &         theta_i   , &
    &         theta_w   , &
@@ -40,7 +42,7 @@ program  main
    &         hn_sn     , &
    &         top_sn    , &
    &         h_snow      )
-CALL update_nix_state(nvec   , &
+   CALL update_nix_state(nvec   , &
    &         ivstart   , &
    &         ivend     , &
    &         top_sn    , &
@@ -66,9 +68,9 @@ CALL update_nix_state(nvec   , &
       call nix_core(             &
       ! Utility variables (IN)
       &     nvec                             , &
-      &     1                                , &
-      &     1                                , &
-      &     1                                , &
+      &     ivstart                          , &
+      &     ivend                            , &
+      &     (ivend-ivstart+1)                , &
       &     ke_soil                          , &
       &     ke_snow                          , &
       &     2                                , &
