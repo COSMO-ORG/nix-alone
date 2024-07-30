@@ -1,3 +1,6 @@
+validtime=2024-04-10T00:00:00
+albedo=0.899993896484375   # Currently not yet used
+z0=0.0                     # Currently not yet used
 nLayers=10
 index DZ_SNOW_M TofSNW_LTOP_M AIRinSNW_VC_T_M H2OinSNW_VC_T_M ICEinSNW_VC_T_M
 1 2.013659954071045 273.11566162109375 0.598785400390625 0.0 0.401214599609375

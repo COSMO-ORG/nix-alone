@@ -170,6 +170,12 @@ contains
 
       open(unit=20, status = "old", file=state_file)
 
+      ! Skip over validtime in the first line
+      read(20, '(A)') line
+      ! Read albedo (skipped for now)
+      read(20, '(A)') line
+      ! Read roughness length (skipped for now)
+      read(20, '(A)') line
       ! Read first line
       read(20, '(A)') line
       read(line, '(A8,I6)') dummy, ke_snow
