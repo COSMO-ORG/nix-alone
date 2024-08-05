@@ -29,6 +29,8 @@
 
 MODULE mo_nix_meteo_util
 
+   USE mo_icon_functions,          ONLY: sat_pres_ice
+
    USE mo_kind,                    ONLY: wp
 
    USE mo_physical_constants,      ONLY: r_d     => rd      , & ! gas constant for dry air
@@ -312,11 +314,11 @@ CONTAINS
          ! -------------------------
 
          ! Specific humidity at surface assuming saturation
-         E_s = 6.112_wp * EXP( (22.46_wp * (t0(i)-273.15_wp)) / (272.62_wp + t0(i)) )  ! Saturation vapour pressure via Magnus Equation
-         e_v = 100.0_wp * E_s                                          ! Water vapour pressure from relative humidty
+         E_s = sat_pres_ice(t0(i))   ! Snow surface saturation pressure over ice
+         e_v = E_s                   ! Assume saturation (RH = 100%)
          q0(i)  = 0.622 * (e_v/ps(i))
 
-         ! Virtuell temperature
+         ! Virtual temperature
          t_v = t1(i) * (1.0_wp + rvd_m_o * q1(i))
 
          ! Density of atmosphere
