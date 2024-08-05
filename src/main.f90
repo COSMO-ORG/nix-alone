@@ -9,8 +9,11 @@ program  main
    use mo_nix_constants             ! physical constants
    use mo_nix_main
    use mo_nix_init
+   use mo_nix_snow_util, only : update_nix_state
 
    integer :: n
+   integer, parameter :: &
+      ivstart = 1, ivend = 1
 ! -------------------
 ! read meteorological input
 ! -------------------
@@ -18,15 +21,19 @@ program  main
 ! -------------------
 ! allocate all global arrays.
 !-------------------
-   call allocate_fields()
+   IF (itype_nix_start .EQ. 3) THEN
+      call read_state()       ! read_state will also allocate
+   ELSE
+      call allocate_fields()
+   ENDIF
 ! ---------------------------------------------------------------------------------
 ! + section i: initializations
 ! ---------------------------------------------------------------------------------
 
-   call nix_init(nvec      , &
+   call nix_init(nvec  , &
    &         ke_snow   , &
-   &         1   , &
-   &         1   , &
+   &         ivstart   , &
+   &         ivend     , &
    &         t_sn      , &
    &         theta_i   , &
    &         theta_w   , &
@@ -35,7 +42,25 @@ program  main
    &         hn_sn     , &
    &         top_sn    , &
    &         h_snow      )
-
+   CALL update_nix_state(nvec   , &
+   &         ivstart   , &
+   &         ivend     , &
+   &         top_sn    , &
+   &         ke_snow   , &
+   &         dzm_sn    , &
+   &         rho_sn    , &
+   &         theta_i   , &
+   &         theta_w   , &
+   &         theta_a   , &
+   &         t_sn      , &
+   &         t_sn_n    , &
+   &         hm_sn     , &
+   &         zm_sn     , &
+   &         hcap_sn   , &
+   &         hcon_sn   , &
+   &         mass_sn   , &
+   &         h_snow    , &
+   &         t_sn_sfc )
 ! begin loop over number of timesteps
    do n = 1,nsteps,1
 
@@ -43,9 +68,9 @@ program  main
       call nix_core(             &
       ! Utility variables (IN)
       &     nvec                             , &
-      &     1                                , &
-      &     1                                , &
-      &     1                                , &
+      &     ivstart                          , &
+      &     ivend                            , &
+      &     (ivend-ivstart+1)                , &
       &     ke_soil                          , &
       &     ke_snow                          , &
       &     2                                , &
@@ -99,7 +124,7 @@ program  main
       ! Soil properties
       &     t_so (:,n)                       )
 
-      call write_output(nvec, 1, 1, n, pro_output_freq, smet_output_freq, &
+      call write_output(nvec, 1, 1, n, timestamp(:,n), pro_output_freq, smet_output_freq, &
         &                 top_sn, ke_snow, dzm_sn, rho_sn               , &
         &                 theta_i, theta_w, theta_a                     , &
         &                 t_sn, t_sn_n, hn_sn, t , alpha_sn)
