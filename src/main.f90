@@ -21,7 +21,7 @@ program  main
 ! -------------------
 ! allocate all global arrays.
 !-------------------
-   IF (itype_nix_start .EQ. 3) THEN
+   IF (itype_nix_start .EQ. 3 .OR. itype_nix_start .EQ. 4) THEN
       call read_state()       ! read_state will also allocate
    ELSE
       call allocate_fields()
@@ -29,7 +29,6 @@ program  main
 ! ---------------------------------------------------------------------------------
 ! + section i: initializations
 ! ---------------------------------------------------------------------------------
-
    call nix_init(nvec  , &
    &         ke_snow   , &
    &         ivstart   , &
@@ -41,7 +40,8 @@ program  main
    &         dzm_sn    , &
    &         hn_sn     , &
    &         top_sn    , &
-   &         h_snow      )
+   &         h_snow    , &
+   &         t(:,1)      )
    CALL update_nix_state(nvec   , &
    &         ivstart   , &
    &         ivend     , &
