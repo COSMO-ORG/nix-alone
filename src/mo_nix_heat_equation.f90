@@ -1,7 +1,8 @@
 module mo_nix_heat_equation
 
    use mo_kind,                    only: wp
-   use mo_physical_constants,      only: stbo
+   use mo_physical_constants,      only: t0_melt  => tmelt , & ! absolute zero for temperature
+                                         stbo
    use mo_nix_constants,           only: eps_div, e_snow, specific_heat_water
 ! ------------------------------------------------------------------------------
 ! declarations
@@ -484,7 +485,7 @@ contains
                t_sn(i,ksn) = 0.5_wp * (t_sn_n(i,ksn) + t_sn_n(i,ksn+1))
             enddo
 
-            t_sn_sfc(i) = t_sn_n(i,top(i)+1)
+            t_sn_sfc(i) = MIN(t_sn_n(i,top(i)+1), t0_melt)
             ! shflx_sn(i) = alpha_shf * ( t(i) - t_sn_sfc(i) )
 
 

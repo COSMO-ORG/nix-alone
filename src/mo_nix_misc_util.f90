@@ -30,6 +30,7 @@
 MODULE mo_nix_misc_util
 
    USE mo_kind,                    ONLY: wp
+   USE mo_physical_constants,      ONLY: t0_melt => tmelt   ! absolute zero for temperature
 
 ! ------------------------------------------------------------------------------
 ! DECLARATIONS
@@ -195,7 +196,7 @@ CONTAINS
 
          IF(top(i) .GE. 1) THEN
 
-            t_snow_new(i)  = t_sn_sfc(i)                 ! temperature of snow surface
+            t_snow_new(i)  = MIN(t_sn_sfc(i),t0_melt)    ! temperature of snow surface
             w_snow_new(i)  = swe_sn(i)/1000.0_wp         ! snow water equivialent FIXME: Add hn_sn (storage) to swe
             h_snow(i)      = hm_sn(i,top(i))             ! snow height
             zshfl_snow(i)  = shflx_sn(i)                 ! sensible heat flux

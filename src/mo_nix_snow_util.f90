@@ -422,7 +422,7 @@ CONTAINS
             ! --------------------------
 
             ! Update snow surface temperature ! Now with nodal temperatures
-            t_sn_sfc(i) = t_sn_n(i,top(i)+1)
+            t_sn_sfc(i) = MIN(t_sn_n(i,top(i)+1), t0_melt)
 
 
          ENDIF
