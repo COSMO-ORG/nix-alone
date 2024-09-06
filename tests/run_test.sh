@@ -1,5 +1,5 @@
-resolutions="20 900"                                    # List of temporal resolutions in seconds
-numberoflayer="100 10"
+resolutions="3600 900 20"                                    # List of temporal resolutions in seconds
+numberoflayer="100 10 3"
 
 
 runNIX() {
@@ -7,6 +7,11 @@ runNIX() {
     # Run NIX
     #
 
+    if (( ${nl} == 3 )); then
+        nlayer=3
+        layer_min=0.005
+        layer_max=0.6
+    fi
     if (( ${nl} == 10 )); then
         nlayer=10
         layer_min=0.002
@@ -42,7 +47,7 @@ runNIX() {
 
     # Set the input file
     mv ./src/input.f90 ./src/input.f90.bak
-    sed 's/.\/inp\/icon_15min_2021.inp/'${stnfile}'/g' ./src/input.f90.bak > ./src/input.f90
+    sed 's/.\/inp\/nix.inp/'${stnfile}'/g' ./src/input.f90.bak > ./src/input.f90
 
     # Make required changes to the configuration
     mv ./src/mo_nix_config.f90 ./src/mo_nix_config.f90.bak
@@ -62,9 +67,9 @@ runNIX() {
     popd
 
     /usr/bin/time -a -o 'timings.txt' -f "NIX ${nlayer}L ${ts}s : %e" ../nix > ${stnfile}.${nlayer}layers.out
-    export TZ=UTC; awk -v dt=${ts} -v t=${timespan[0]} -F, 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {print} else {if(/^0500/) {print "0500," strftime("%Y-%m-%dT%H:%M:%S", d+dt*$2)} else {print}}; if(/\[DATA\]/) {data=1}}' output.pro > ${stnfile}.${nlayer}.pro
-    export TZ=UTC; awk -v dt=${ts} -v t=${timespan[0]} 'BEGIN {data=0; d=mktime(sprintf("%04d %02d %02d %02d %02d %02d 0", substr(t,1,4), substr(t,6,2), substr(t,9,2), substr(t,12,2), substr(t,15,2), substr(t,19,2)))} {if(!data) {if(/^fields/) {gsub(/timestep/, "TIMESTAMP", $0)}; print} else {printf("%s", strftime("%Y-%m-%dT%H:%M:%S", d+dt*$1)); for(i=2; i<=NF; i++) {printf " %s", $i}; printf "\n"}; if(/\[DATA\]/) {data=1}}' output.smet > ${stnfile}.${nlayer}.smet
-    rm output.pro output.smet
+    mv output.smet ${stnfile}.${nlayer}.smet
+    mv output.pro ${stnfile}.${nlayer}.pro
+
 }
 
 runSNOWPACK() {
