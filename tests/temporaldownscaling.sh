@@ -26,8 +26,8 @@ do
 	echo "[Input]" >> io.ini
 	echo "STATION1				= ${metfile}" >> io.ini
 	echo "[Interpolations1D]" >> io.ini
-	echo "TOT_PREC::resample		= none" >> io.ini
-	echo "TOT_PREC::accumulate::period	= ${target_resolution}" >> io.ini
+	echo "TOT_PREC::resample1		= none" >> io.ini
+	#echo "TOT_PREC::arg1::period	= ${target_resolution}" >> io.ini
 
 	if (( ${target_resolution} == 20 )); then
 		echo "[Filters]" >> io.ini

@@ -91,7 +91,7 @@ runSNOWPACK() {
     echo "[Filters]" >> io_snowpack_${ts}.ini
     echo "PSUM::arg1::cst         = ${ts}" >> io_snowpack_${ts}.ini
     echo "[Interpolations1D]" >> io_snowpack_${ts}.ini
-    echo "PSUM::accumulate::period = ${ts}" >> io_snowpack_${ts}.ini
+    echo "PSUM::arg1::period = ${ts}" >> io_snowpack_${ts}.ini
     # Run SNOWPACK:
     /usr/bin/time -a -o 'timings.txt' -f "SNOWPACK ${ts}s : %e" ../../snowpack/bin/snowpack -c io_snowpack_${ts}.ini -b ${begin} -e ${end}
 }
